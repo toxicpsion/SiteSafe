@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+		/>
+
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="
+      default-src 'self' data: gap: https://ssl.gstatic.com https://*:* 'unsafe-eval' 'unsafe-inline'; 
+      style-src 'self' 'unsafe-inline'; 
+      media-src *; 
+      img-src 'self' blob: http://*:* https://*:* data: content:;
+      connect-src https://*:* http://*.6west.ca:* file://* http://localhost:* ws://localhost:*;
+      "
+		/>
+
+		<script src="js/sha1.js"></script>
+
+		<script src="js/signature_pad.min.js"></script>
+		<script src="js/signature_pad.tweaks.js"></script>
+
+		<script src="lib/onsenui/js/onsenui.min.js"></script>
+
+		<link rel="stylesheet" href="components/loader.css" />
+		<link rel="stylesheet" href="lib/onsenui/css/onsenui.css" />
+		<link rel="stylesheet" href="lib/onsenui/css/onsen-css-components.css" />
+		<link rel="stylesheet" href="css/style.css" />
+
+		<script src="components/loader.js"></script>
+		<script src="cordova.js"></script>
+
+		<script src="js/error-stack-parser.min.js"></script>
+		<script src="js/stacktrace-gps.js"></script>
+		<script src="js/stacktrace.js"></script>
+
+		<script src="js/CordovaPromiseFS.js"></script>
+		<script src="js/index.js"></script>
+		<script src="js/modalHandler.js"></script>
+	</head>
+
+	<body>
+		<div class="commandBar"></div>
+
+		<ons-page id="rootWindow">
+			<ons-navigator id="rootNavigator"></ons-navigator>
+		</ons-page>
+
+		<template id="tpl_loginPage">
+			<ons-page id="p_login">
+				<div style="text-align: center;">
+					<img src="logo.png" style="width: 80%; margin-bottom: -5em;">
+					<form>
+						<p>
+							<ons-input input-id="username" inputmode="email" autocomplete="current-email" autocapitalize="none"
+								onkeyup="if (event.keyCode==13) { document.getElementById('password').focus(); }" placeholder="Username">
+							</ons-input>
+						</p>
+						<p>
+							<ons-input input-id="password" autocomplete="current-password" type="password" onkeyup="if (event.keyCode==13) 
+								{
+										document.getElementById('password').blur();
+										document.getElementById('btnLogin').click();
+								}" placeholder="Password">
+							</ons-input>
+						</p><br>
+						<p><ons-checkbox input-id="remember"></ons-checkbox><label for="remember">&nbsp;Remember Me</label></p>
+						<p>
+							<ons-button id="btnLogin">Sign in</ons-button>
+						</p>
+						<p>
+						<ons-button modifier="quiet" onclick="app.forgotPassword()">Forgot Password?</ons-button>
+						</p>
+					</form>
+				</div>
+			
+			</ons-page>
+		</template>
+		<template id="tpl_tabNavigator">
+			<ons-page id="navigationTabPage">
+				<ons-tabbar id="global_tabbar" position="bottom" swipeable>
+					<ons-tab
+						label="Documents"
+						page="tpl_docList"
+						icon="file"
+						active
+					>
+					</ons-tab>
+					<ons-tab label="Reference" page="tpl_refList" icon="book">
+					</ons-tab>
+					<ons-tab label="Settings" page="tpl_settings" icon="gear">
+					</ons-tab>
+				</ons-tabbar>
+			</ons-page>
+		</template>
+
+		<!-- PAGE TEMPLATES -->
+		<template id="tpl_refList">
+			<ons-page id="p_reference">
+				<div class="pageTitleBar">
+					Reference
+				</div>
+				<ons-list id="l_reference"> </ons-list>
+			</ons-page>
+		</template>
+
+		<template id="tpl_settings">
+			<ons-page id="p_settings">
+				<div class="pageTitleBar">
+					Settings
+				</div>
+				<form>
+					<ons-list id="l_preferences" style="font-size: larger; width: 100%;">
+					</ons-list>
+				</form>
+			</ons-page>
+		</template>
+
+		<template id="tpl_docList">
+			<ons-page id="p_documents">
+				<ons-toolbar class="topToolbar"> </ons-toolbar>
+				<div class="pageTitleBar">
+					Documents
+				</div>
+				<ons-list id="l_Active"> </ons-list>
+			</ons-page>
+		</template>
+
+		<template id="tpl_refRender">
+			<ons-page id="p_refRender">
+				<div class="renderCanvas"></div>
+			</ons-page>
+		</template>
+
+		<template id="tpl_docRender">
+			<ons-page id="p_docRender">
+				<div class="renderCanvas"></div>
+			</ons-page>
+		</template>
+
+		<template id="tpl_docView">
+			<ons-page id="p_docView">
+				<div class="renderCanvas"></div>
+			</ons-page>
+		</template>
+
+		<template id="tpl_accountPage">
+			<ons-page id="p_accountPage">
+				<div class="renderCanvas"></div>
+			</ons-page>
+		</template>
+
+		<template id="tpl_blankpage">
+			<ons-page id="p_blankPage"></ons-page>
+		</template>
+
+		<!-- FRAGMENT TEMPLATES-->
+		<template id="documentItem" class="tpl">
+			<ons-list-item class="docItem" expandable tappable>
+				<div class="left">
+					<img class="list-item__thumbnail" src="" />
+				</div>
+				<div class="center">
+					<span class="list-item__title"></span>
+					<span class="list-item__subtitle"></span>
+				</div>
+				<div class="right subdocumentControlArea">
+					<ons-button class="aButton" icon="plus"></ons-button>
+				</div>
+				<div class="expandable-content"></div>
+			</ons-list-item>
+		</template>
+
+		<template id="subdocumentItem">
+			<ons-list-item class="subDocItem" modifier="nodivider" tappable>
+				<div class="center">
+					<span class="list-item__title"></span>
+					<span class="list-item__subtitle"></span>
+				</div>
+				<div class="right subdocumentControlArea"></div>
+			</ons-list-item>
+		</template>
+
+		<template id="genericListItem">
+			<ons-list-item class="listitem" tappable>
+				<div class="left">
+					<img class="list-item__thumbnail" src="" />
+				</div>
+				<div class="center">
+					<span class="list-item__title"></span>
+					<span class="list-item__subtitle" style="display: none;"></span>
+				</div>
+			</ons-list-item>
+		</template>
+
+		<ons-modal animation="fade">
+			<div style="text-align: center;">
+				<p class="lModalMessage"></p>
+			</div>
+		</ons-modal>
+
+		<ons-popover class="genericPopOver" cancelable>
+			<div class="renderCanvas popover__content">
+				<ons-button icon="print"></ons-button>
+			</div>
+		</ons-popover>
+
+		<script>	app.initialize();</script>
+	</body>
+</html>

@@ -79,17 +79,17 @@
   </platform>
   <preference name="WindowsStorePublisherName" value="My Name"/>
   <preference name="WindowsStoreIdentityName" value="dd1b5f57-f121-d497-ce96-04d5c745aed5"/>
-  <preference name="ios-XCBuildConfiguration-TARGETED_DEVICE_FAMILY" value="1,2"/>
-  <preference name="AutoHideSplashScreen" value="true"/>
-  <preference name="FadeSplashScreen" value="true"/>
-  <preference name="ShowSplashScreenSpinner" value="false"/>
-  <preference name="EnableViewportScale" value="false"/>
-  <access origin="*"/>
   <preference name="KeepRunning" value="true"/>
   <preference name="monaca:AndroidIsPackageNameSeparate" value="true"/>
-  <preference name="DisallowOverscroll" value="true"/>
   <preference name="Orientation" value="portrait"/>
   <preference name="SplashScreenDelay" value="1000"/>
   <preference name="Fullscreen" value="false"/>
   <preference name="SplashScreenBackgroundColor" value="#464646"/>
+  <preference name="ios-XCBuildConfiguration-TARGETED_DEVICE_FAMILY" value="1"/>
+  <preference name="AutoHideSplashScreen" value="true"/>
+  <preference name="FadeSplashScreen" value="true"/>
+  <preference name="ShowSplashScreenSpinner" value="false"/>
+  <access origin="*"/>
+  <preference name="DisallowOverscroll" value="true"/>
+  <preference name="EnableViewportScale" value="false"/>
 </widget>

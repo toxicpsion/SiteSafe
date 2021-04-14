@@ -382,9 +382,10 @@ let app = {
 			app.fatalError(`App Startup Failed`, `Cordova seems to be missing.`);
 			sixWestPromiseAPI.sendLog("missing cordova");
 		} else {
+
 			var appRootURL = window.location.href.replace("index.html", "");
 
-			/* 			window.onerror = function (errorMsg, url, line, col, error) {
+			 			window.onerror = function (errorMsg, url, line, col, error) {
 				var logMessage = errorMsg;
 				var stackTrace = null;
 
@@ -405,7 +406,7 @@ let app = {
 					sendError();
 				}
 			};
-			 */
+			 
 			sixWestPromiseAPI.sendLog("bind deviceready");
 			document.addEventListener("deviceready", app.deviceReady.bind());
 		}
@@ -613,6 +614,8 @@ let app = {
 			}
 			case "navigationTabPage": {
 				//
+
+				
 				break;
 			}
 			case "p_documents": {

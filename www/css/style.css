@@ -242,7 +242,7 @@
 	flex-flow: row wrap;
 	flex-basis: 20%;
 }
-* {
+#disabled_all {
 	border:1px dotted red
 }
 @media print {

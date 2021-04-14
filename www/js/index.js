@@ -195,7 +195,7 @@ let sixWestPromiseAPI = {
 						data.user.passhash = hex_sha1(password);
 
 						//Check Connected
-						sixWestPromiseAPI.sendLog(data.user.name, "LOGIN");
+						app.log(data.user.name, "LOGIN");
 						sixWestPromiseAPI.lastPingTime = Date.now() / 1000;
 
 						resolve(data.user);
@@ -376,21 +376,19 @@ let app = {
 		concurrency: 3, // how many concurrent uploads/downloads?
 	}),
 	initialize: () => {
-		sixWestPromiseAPI.sendLog("init");
-
 		if (typeof cordova == typeof undefined) {
 			app.fatalError(`App Startup Failed`, `Cordova seems to be missing.`);
 			sixWestPromiseAPI.sendLog("missing cordova");
 		} else {
-
 			var appRootURL = window.location.href.replace("index.html", "");
 
-			 			window.onerror = function (errorMsg, url, line, col, error) {
+			window.onerror = function (errorMsg, url, line, col, error) {
 				var logMessage = errorMsg;
 				var stackTrace = null;
 
 				var sendError = function () {
 					sixWestPromiseAPI.sendLog(logMessage);
+					ons.notification.alert(logMessage);
 					return;
 				};
 
@@ -406,8 +404,7 @@ let app = {
 					sendError();
 				}
 			};
-			 
-			sixWestPromiseAPI.sendLog("bind deviceready");
+
 			document.addEventListener("deviceready", app.deviceReady.bind());
 		}
 	},
@@ -427,12 +424,10 @@ let app = {
 	deviceReady: function deviceReady() {
 		cordova.getAppVersion.getVersionNumber().then((version) => {
 			app.version = version;
-			sixWestPromiseAPI.sendLog(`deviceReady (${app.version})`);
+			app.log(`deviceReady (${app.version})`);
 		});
 
 		app.thisStartUUID = hex_sha1(String(Date.now()));
-
-	
 
 		if (ons.platform.isIPhoneX()) {
 			console.debug("Applying IphoneX css fixes.");
@@ -440,7 +435,6 @@ let app = {
 			document.documentElement.setAttribute("onsflag-iphonex-landscape", "");
 		}
 
-		sixWestPromiseAPI.sendLog("Binding Page Listeners.");
 		document.addEventListener("init", app.pageInitHandler, false);
 		document.addEventListener("show", app.pageShowHandler, false);
 
@@ -615,7 +609,6 @@ let app = {
 			case "navigationTabPage": {
 				//
 
-				
 				break;
 			}
 			case "p_documents": {
@@ -710,5 +703,5 @@ let app = {
 };
 
 ons.ready(() => {
-	sixWestPromiseAPI.sendLog("UI Ready");
+	console.debug("UI Ready");
 });

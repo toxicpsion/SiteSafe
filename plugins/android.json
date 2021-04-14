@@ -24,6 +24,9 @@
     },
     "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
+    },
+    "cordova-plugin-network-information": {
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
     }
   },
   "dependent_plugins": {}

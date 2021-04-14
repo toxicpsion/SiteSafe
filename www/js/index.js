@@ -7,36 +7,12 @@ modal
 */
 
 //Included Modules I Use:
+
 //CordovaPromiseFS: MIT Licence - https://github.com/markmarijnissen/cordova-promise-fs
 //Sha1: BSD Licence - http://pajhome.org.uk/crypt/md5/
 //signature_pad: MIT Licence - https://github.com/szimek/signature_pad
 
 // eslint-disable-next-line no-unused-vars
-let UTIL = {
-	getNewObjectKeys: function getNewObjectKeys(newObject, oldObject) {
-		if (!(newObject instanceof Object) || !(oldObject instanceof Object))
-			return;
-
-		let diff = Object.keys(newObject).filter(
-			(x) => !Object.keys(oldObject).includes(x)
-		);
-		let difference = {};
-		diff.forEach((i) => (difference[i] = newObject[i]));
-		return difference;
-	},
-	isEmptyObject: function (obj) {
-		var name;
-		for (name in obj) {
-			Object.prototype.hasOwnProperty.call(obj, name);
-			//if (obj.hasOwnProperty(name)) {
-			if (Object.prototype.hasOwnProperty.call(obj, name)) {
-				return false;
-			}
-		}
-		return true;
-	},
-};
-
 let sixWestPromiseAPI = {
 	APIServerDefault: "http://artisan.6west.ca:16022",
 	sendLog: function sendLog(
@@ -64,8 +40,6 @@ let sixWestPromiseAPI = {
 	},
 	isConnected: async function isConnected() {
 		return await new Promise((resolve, reject) => {
-			console.debug("Checking API connection");
-
 			if (navigator.connection.type == Connection.UNKNOWN) reject();
 
 			if (navigator.connection.type == Connection.NONE) {
@@ -74,7 +48,6 @@ let sixWestPromiseAPI = {
 				navigator.connection.type == Connection.WIFI ||
 				navigator.connection.type == Connection.ETHERNET
 			) {
-				console.debug("WIFI/ETHER");
 				sixWestPromiseAPI
 					.pingServer()
 					.then((pingResponse) => {
@@ -87,10 +60,8 @@ let sixWestPromiseAPI = {
 				navigator.connection.type != Connection.UNKNOWN
 			) {
 				if (app.preferences.minimizeDataUse) {
-					console.debug("CELL: MinData");
 					resolve(false);
 				} else {
-					console.debug("CELL");
 					sixWestPromiseAPI
 						.pingServer()
 						.then((pingResult) => {
@@ -107,6 +78,7 @@ let sixWestPromiseAPI = {
 	pingServer: function pingServer(host = sixWestPromiseAPI.APIServerDefault) {
 		// eslint-disable-next-line no-unused-vars
 		return new Promise((resolve, reject) => {
+			
 			let thisRequestTime = parseInt(Date.now() / 1000);
 			let pingTargetTime =
 				(sixWestPromiseAPI.lastPingTime || 0) + app.preferences.pingTimeout;
@@ -226,26 +198,45 @@ let sixWestPromiseAPI = {
 	},
 	fetchResource: function (resource, params = {}) {
 		return new Promise(function (resolve, reject) {
-			console.debug("fetchResource");
-			console.debug(resource, params);
+
 			setTimeout(() => {
 				reject({ status: 500, message: "Timed Out." });
 			}, 5000);
 
-			fetch(`${sixWestPromiseAPI.APIServerDefault}/resource/${resource}`, {
-				method: "post",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					u: app.currentUser.username,
-					p: app.currentUser.passhash,
-				}),
-			})
-				.then((r) => r.json())
-				.then((data) => {
-					resolve(data);
-				});
+			sixWestPromiseAPI.isConnected().then((connected) => {
+				if (connected) {
+					fetch(`${sixWestPromiseAPI.APIServerDefault}/fetch/${resource}`, {
+						method: "post",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							u: app.currentUser.username,
+							p: app.currentUser.passhash,
+							params: params,
+						}),
+					})
+						.then((r) => r.json())
+						.then((data) => {
+							console.log(data[0])
+							app.fs.write(`${resource}`, JSON.stringify(data[0])).then((e) => {
+								resolve(data[0]);
+							});
+						});
+				} else {
+					app.fs.exists(`${resource}`).then((f) => {
+						if (f.isFile) {
+							//exists
+							app.fs.read(f).then((data) => {
+								console.debug(`cache hit. ${resource}`);
+								resolve(JSON.parse(data));
+							});
+						} else {
+							reject();
+						}
+					});
+				}
+			});
 		});
 	},
 	putResource: function (resource, params = {}) {
@@ -257,18 +248,58 @@ let sixWestPromiseAPI = {
 			}, 5000);
 		});
 	},
-	listResource: function (resource, params = {}) {
+	listResource: function (resource, options = {}) {
 		return new Promise(function (resolve, reject) {
-			console.debug("putResource");
-			console.debug(resource, params);
+			console.debug("listResource");
 			setTimeout(() => {
 				reject({ status: 500, message: "Timed Out." });
 			}, 5000);
+
+			sixWestPromiseAPI.isConnected().then((connected) => {
+				if (connected) {
+					fetch(`${sixWestPromiseAPI.APIServerDefault}/list/${resource}`, {
+						method: "post",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							u: app.currentUser.username,
+							p: app.currentUser.passhash,
+							options: options,
+						}),
+					})
+						.then((r) => r.json())
+						.then((data) => {
+							app.fs
+								.write(`${resource}_list`, JSON.stringify(data))
+								.then((e) => {
+									resolve(data);
+								});
+						});
+				} else {
+					app.fs.exists(`${resource}_list`).then((f) => {
+						if (f.isFile) {
+							//exists
+							app.fs.read(f).then((data) => {
+								console.debug(`cache hit. ${resource}_list`);
+								resolve(JSON.parse(data));
+							});
+						} else {
+							reject();
+						}
+					});
+				}
+			});
 		});
 	},
 };
 
 let app = {
+	state: {
+		documentList: {},
+		templateList: {},
+		template:[],
+	},
 	preferences: {
 		//DEFAULTS
 		//reset: delete saved prefs on startup
@@ -287,6 +318,7 @@ let app = {
 		if (app.preferences.debug) {
 			sixWestPromiseAPI.sendLog(message, logmodule);
 		}
+
 		console.log(
 			JSON.stringify({
 				client: app.thisStartUUID,
@@ -389,6 +421,7 @@ let app = {
 				var sendError = function () {
 					sixWestPromiseAPI.sendLog(logMessage);
 					ons.notification.alert(logMessage);
+
 					return;
 				};
 
@@ -447,9 +480,10 @@ let app = {
 					console.debug("Failed to load Preferences");
 				}
 
+				//Ping Once At start
 				sixWestPromiseAPI
 					.isConnected()
-					.then((res) => console.debug(res))
+					.then(() => {})
 					.catch((e) => console.debug(e));
 			})
 			.catch((e) => {
@@ -632,9 +666,8 @@ let app = {
 						.pushPage("tpl_accountPage", { data: { mode: "modify" } });
 				};
 
-				sixWestPromiseAPI.fetchResource("list").then((resourceList) => {
-					console.table(resourceList);
-				});
+				app.updateDocumentList();
+
 				break;
 			}
 			default: {
@@ -694,11 +727,81 @@ let app = {
 
 				break;
 			}
-
+			case "p_documents": {
+				app.updateDocumentList();
+				break;
+			}
 			default: {
 				//
 			}
 		}
+	},
+	updateDocumentList: function () {
+		let docList = document.getElementById("documentList");
+		if (!document.getElementById("d_actionStrip")) {
+			let d_actionStrip = ons.createElement(
+				'<div id="d_actionStrip" style="position: relative; top: 1em; white-space: nowrap; margin: 0px auto; text-align: center;"></div>'
+			);
+
+			let b_CreateNew = ons.createElement(
+				'<ons-button icon="plus">&nbsp;&nbsp;CREATE NEW</ons-button>'
+			);
+			b_CreateNew.addEventListener(
+				"click",
+				function () {
+					ons.notification.alert("CreateDoc!");
+					return;
+
+					document.getElementById("rootNavigator").pushPage("t_docRender", {
+						data: {
+							templateID: 0,
+							parentID: 0,
+						},
+					});
+				},
+				false
+			);
+			d_actionStrip.append(b_CreateNew);
+			docList.parentNode.append(d_actionStrip);
+		}
+		sixWestPromiseAPI
+			.listResource("templates", { test: "test" })
+			.then((resourceList) => {
+				// Get only toplevel templates
+				//	resourceList = resourceList.filter((item) => item.id.length < 5);
+				app.state.templateList = resourceList;
+
+				resourceList.forEach((e) => {
+					sixWestPromiseAPI
+						.fetchResource("templates/" + e.id)
+						.then(() => {});
+				});
+			});
+
+		sixWestPromiseAPI
+			.listResource("documents", { test: "test" })
+			.then((resourceList) => {
+				let newDocuments = UTIL.getNewObjectKeys(
+					resourceList,
+					app.state.documentList
+				);
+
+				let removedDocuments = UTIL.getNewObjectKeys(
+					app.state.documentList,
+					resourceList
+				);
+
+				app.state.documentList = resourceList;
+
+				//newRootDocuments = newDocuments.filter((item) => item.root_node == "0");
+				if (Object.keys(newDocuments).length) {
+					for (const key in newDocuments) {
+						sixWestPromiseAPI
+							.fetchResource("documents/" + newDocuments[key].id)
+							.then((d) => console.log(d[0]));
+					}
+				}
+			});
 	},
 };
 

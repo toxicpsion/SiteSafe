@@ -1,11 +1,8 @@
 {
-    "name": "monaca-template-onsenui-v2-js-navigation",
+    "name": "sixwest-sitesafe-cordova",
     "version": "2.0.7",
     "dependencies": {
-        "cordova-android": "^8.1.0",
-        "cordova-browser": "^6.0.0",
         "cordova-custom-config": "5.1.0",
-        "cordova-ios": "^5.1.1",
         "cordova-plugin-app-version": "^0.1.12",
         "cordova-plugin-file": "^6.0.2",
         "cordova-plugin-file-transfer": "^1.7.1",
@@ -24,9 +21,7 @@
             "cordova-plugin-file-transfer": {}
         },
         "platforms": [
-            "android",
-            "browser",
-            "ios"
+            "android"
         ]
     },
     "scripts": {
@@ -35,6 +30,7 @@
     },
     "devDependencies": {
         "browser-sync": "^2.26.7",
-        "cordova": "^9.0.0"
+        "cordova": "^9.0.0",
+        "cordova-android": "^9.1.0"
     }
 }

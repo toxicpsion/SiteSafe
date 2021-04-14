@@ -1,2 +1,295 @@
-/**/
+/*ONSEN SETUP*/
+.tabbar__badge.notification {
+	background-color: transparent;
+	color: white;
+}
+.pageTitleBar {
+	height: 1em;
+	padding: 0.3em;
+	font-size: small;
+	font-variant: small-caps;
+	text-align: center;
+	background-color: lightgrey;
+	border-bottom: 1px solid darkgrey;
+}
+.commandBar {
+	animation: fade 2s ease-in-out;
 
+	display: flex;
+	position: fixed;
+	z-index: 10;
+	background-color: rgba(0, 0, 0, 0.6);
+	padding: 0.5em;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	border-top: 1px solid lightgrey;
+
+	justify-content: space-between;
+	visibility: hidden;
+
+	/*	display: none;*/
+}
+.commandBar .printButton {
+	margin-right: 20px;
+}
+.commandBar .saveButton {
+	/*	margin-right: 20px;*/
+	background-color: rgba(30, 250, 30, 0.9);
+}
+.commandBar .abortButton {
+	background-color: rgba(255, 100, 100, 0.9);
+	margin-right: 20px;
+}
+.assignButton {
+	background-color: rgba(30, 180, 30, 0.9);
+}
+.deleteButton {
+	background-color: rgba(255, 100, 100, 0.9);
+}
+.addButton.altState {
+	background-color: rgba(180, 180, 180, 0.9);
+}
+.saveButton.disabled {
+	background-color: rgba(180, 180, 180, 0.9);
+	pointer-events: none;
+}
+.jobControls {
+	display: flex;
+	width: fit-content;
+	flex-wrap: nowrap;
+	float: left;
+}
+.alert-dialog-content {
+	max-height: 80vh;
+	overflow-y: scroll;
+}
+
+#p_docRender .renderCanvas {
+	padding: 1em;
+	padding-bottom: 100px;
+	right: 5%;
+}
+
+#p_docView .renderCanvas {
+	padding: 1em;
+	padding-bottom: 100px;
+	right: 5%;
+}
+#p_accountPage .username {
+	font-size: x-large;
+}
+
+#p_accountPage .renderCanvas {
+	text-align: center;
+}
+#p_accountPage .userImage {
+	content: url("../images/240px-Gnome-stock_person.png");
+	width: 60%;
+	padding-top: 10%
+	
+}
+
+.list-item__thumbnail {
+	border-radius: 0.2em;
+}
+/*Item Styling*/
+
+.hasSubItems {
+	background-color: transparent;
+	border: thin dotted grey;
+	border-radius: 0.25em;
+	margin-left: -0.2em;
+}
+.hasSubItems .subGroupContainer {
+	padding-left: 1em;
+	font-size: small;
+	font-weight: 300;
+}
+.hasSubItems .subGroupContainer .formItem_checkbox {
+	font-size: small;
+	font-weight: 400;
+	vertical-align: baseline;
+}
+
+.formItem_checkbox {
+	font-size: large;
+	font-weight: 400;
+	vertical-align: baseline;
+}
+.controlItem {
+	display: flex;
+	justify-content: space-between;
+	flex-flow: row nowrap;
+	flex-basis: 25%;
+}
+.itemHeader {
+	font-weight: bold;
+	font-size: small;
+	flex-grow: 1;
+	order: 0;
+}
+.itemDesc {
+	font-size: small;
+	font-weight: 200;
+	white-space: pre-wrap;
+	flex-grow: 2;
+	order: 1;
+}
+.itemResponse {
+	justify-self: right;
+	display: block;
+	white-space: nowrap;
+	text-align: right;
+	break-after: always;
+	flex-grow: 1;
+	order: 2;
+
+	/*float: inline-end;*/
+}
+.signatureBox {
+	padding: 0;
+	/*border: 1px solid darkgray;
+	*/
+}
+.toolbarIcon {
+	content: url("../bar_logo.png");
+	height: auto;
+	display: inline-block;
+	position: absolute;
+	top: 0.2em;
+	bottom: 0.2em;
+	margin: 0.5em;
+}
+.toolbarUserName {
+	padding-right: 0.2em;
+	padding-left: 0.2em;
+	/* border: 1px dotted grey;*/
+	background-color: #eeeeee;
+	border-radius: 0.4em;
+	position: absolute;
+	margin: 0.5em;
+	right: 0.1em;
+	font-weight: 400;
+	bottom: 0em;
+
+	font-variant: small-caps;
+	font-size: medium;
+	text-overflow: clip;
+}
+.toolbarUserIcon {
+	position: relative;
+	margin: 0em;
+	right: 0em;
+	bottom: -3px;
+
+	content: url("../images/240px-Gnome-stock_person.png");
+	width: 2em;
+	height: 2em;
+}
+
+.hasInteracted {
+	background-color: #f0fff0;
+}
+.invalidated {
+	background-color: #ffeeee;
+	border: 1px dotted #ffdddd;
+}
+.range {
+	width: 100%;
+}
+.lModalMessage {
+	transition: visible 1s linear;
+}
+.userIsSelected {
+	background-color: lightgreen;
+	border: 1px dotted green;
+}
+.debugpane {
+	position: absolute;
+	padding: 0.2em;
+	background-color: rgba(255, 96, 96, 0.3);
+	bottom: 1px;
+	font-size: x-small;
+	right: 1px;
+	z-index: 500;
+}
+
+.printableDocument .titleBlock {
+	display: flex;
+	justify-content: space-between;
+	font-weight: bold;
+	border-bottom: 1px dotted lightgrey;
+	vertical-align: text-top;
+}
+.printableDocument .subtitleBlock {
+	display: flex;
+	justify-content: space-between;
+	font-weight: bold;
+
+	vertical-align: text-top;
+
+}
+.subtitleBlock .pageSubTitle {
+	font-weight: lighter;
+}
+.pageAuthor {
+	display: flex;
+	font-weight: lighter;
+}
+.ctlCheckBox {
+	display: inline-flex;
+	flex-flow: row wrap;
+	flex-basis: 20%;
+}
+* {
+	border:1px dotted red
+}
+@media print {
+	* {
+		font-size: small;
+		background-color: white;
+		/*border: 1px dotted lightgrey*/
+	}
+	.printableDocument .headerIcon {
+		content: url("../logo.png");
+		width: 3em;
+		height: auto;
+		display: block;
+		float: left;
+		padding-right: 1em;
+}
+	.printableDocument {
+		position: fixed;
+		left: 0px;
+		right: 0px;
+		top: 0px;
+		bottom: 0px;
+		padding: 0px 0px 0px 0px;
+		margin: 0px 0px 0px 0px;
+	}
+	.subItemContainer {
+		display: flex;
+		flex-flow: row wrap;
+	}
+	.ctlCheckBox ons-icon {
+		break-after: avoid;
+	}
+	.ctlCheckBox {
+		display: inline-flex;
+		flex-wrap: nowrap;
+		flex-grow: 3;
+	}
+	.commandBar {
+		display: none;
+		visibility: hidden;
+	}
+	.topToolbar {
+		display: none;
+		visibility: hidden;
+	}
+	.debugpane {
+		display: none;
+		visibility: hidden;
+	}
+}

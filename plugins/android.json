@@ -8,22 +8,22 @@
   },
   "installed_plugins": {
     "cordova-custom-config": {
-      "PACKAGE_NAME": "com.example.helloworld"
-    },
-    "cordova-plugin-splashscreen": {
-      "PACKAGE_NAME": "com.example.helloworld"
-    },
-    "cordova-plugin-whitelist": {
-      "PACKAGE_NAME": "com.example.helloworld"
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
     },
     "cordova-plugin-app-version": {
-      "PACKAGE_NAME": "com.example.helloworld"
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
     },
     "cordova-plugin-file": {
-      "PACKAGE_NAME": "com.example.helloworld"
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
     },
     "cordova-plugin-file-transfer": {
-      "PACKAGE_NAME": "com.example.helloworld"
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
+    },
+    "cordova-plugin-splashscreen": {
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
+    },
+    "cordova-plugin-whitelist": {
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
     }
   },
   "dependent_plugins": {}

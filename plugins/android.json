@@ -27,6 +27,10 @@
     },
     "cordova-plugin-network-information": {
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
+    },
+    "cordova-plugin-printer": {
+      "ANDROID_SUPPORT_V4_VERSION": "28.+",
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
     }
   },
   "dependent_plugins": {}

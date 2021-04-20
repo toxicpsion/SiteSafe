@@ -20,7 +20,10 @@
             "cordova-plugin-app-version": {},
             "cordova-plugin-file": {},
             "cordova-plugin-file-transfer": {},
-            "cordova-plugin-network-information": {}
+            "cordova-plugin-network-information": {},
+            "cordova-plugin-printer": {
+                "ANDROID_SUPPORT_V4_VERSION": "28.+"
+            }
         },
         "platforms": [
             "android"
@@ -33,6 +36,7 @@
     "devDependencies": {
         "browser-sync": "^2.26.7",
         "cordova": "^10.0.0",
-        "cordova-android": "^9.1.0"
+        "cordova-android": "^9.1.0",
+        "cordova-plugin-printer": "^0.8.0"
     }
 }

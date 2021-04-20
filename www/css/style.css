@@ -1,8 +1,10 @@
 /*ONSEN SETUP*/
+
 .tabbar__badge.notification {
 	background-color: transparent;
 	color: white;
 }
+
 .pageTitleBar {
 	height: 1em;
 	padding: 0.3em;
@@ -37,10 +39,23 @@
 	/*	margin-right: 20px;*/
 	background-color: rgba(30, 250, 30, 0.9);
 }
+.commandBar .saveButton.disabled {
+	background-color: rgba(180, 180, 180, 0.9);
+	pointer-events: none;
+}
 .commandBar .abortButton {
 	background-color: rgba(255, 100, 100, 0.9);
 	margin-right: 20px;
 }
+
+.docItem .center {
+	overflow-x: clip;
+}
+.docItem .controlArea {
+	position: absolute;
+	right: 0.25em;
+}
+
 .assignButton {
 	background-color: rgba(30, 180, 30, 0.9);
 }
@@ -50,16 +65,15 @@
 .addButton.altState {
 	background-color: rgba(180, 180, 180, 0.9);
 }
-.saveButton.disabled {
-	background-color: rgba(180, 180, 180, 0.9);
-	pointer-events: none;
-}
+
 .jobControls {
 	display: flex;
 	width: fit-content;
 	flex-wrap: nowrap;
 	float: left;
+	padding-right: 0.25em;
 }
+
 .alert-dialog-content {
 	max-height: 80vh;
 	overflow-y: scroll;
@@ -76,6 +90,7 @@
 	padding-bottom: 100px;
 	right: 5%;
 }
+
 #p_accountPage .username {
 	font-size: x-large;
 }
@@ -83,11 +98,11 @@
 #p_accountPage .renderCanvas {
 	text-align: center;
 }
+
 #p_accountPage .userImage {
 	content: url("../images/240px-Gnome-stock_person.png");
 	width: 60%;
-	padding-top: 10%
-	
+	padding-top: 10%;
 }
 
 .list-item__thumbnail {
@@ -95,46 +110,38 @@
 }
 /*Item Styling*/
 
-.hasSubItems {
-	background-color: transparent;
-	border: thin dotted grey;
-	border-radius: 0.25em;
-	margin-left: -0.2em;
-}
-.hasSubItems .subGroupContainer {
-	padding-left: 1em;
-	font-size: small;
-	font-weight: 300;
-}
-.hasSubItems .subGroupContainer .formItem_checkbox {
-	font-size: small;
-	font-weight: 400;
-	vertical-align: baseline;
-}
-
-.formItem_checkbox {
-	font-size: large;
-	font-weight: 400;
-	vertical-align: baseline;
-}
 .controlItem {
+	width: 100%;
+}
+.controlItem .subGroupContainer {
+	/* margin-left: 1em; */
+	break-before: always;
 	display: flex;
-	justify-content: space-between;
-	flex-flow: row nowrap;
-	flex-basis: 25%;
+	flex-direction: column;
+	align-items: stretch;
+	flex: 1 0 50%;
+
+	/* justify-content: space-evenly;
+	
+	flex-wrap: wrap;
+	flex-direction: row; */
+}
+.subGroupContainer .formItem_checkbox {
+	flex-grow: 1;
+	padding: 5pt;
 }
 .itemHeader {
+	width: 100%;
+	border-bottom: 1px solid darkgrey;
+	background-color: lightgrey;
+}
+.itemTitle {
 	font-weight: bold;
 	font-size: small;
-	flex-grow: 1;
-	order: 0;
 }
 .itemDesc {
 	font-size: small;
-	font-weight: 200;
-	white-space: pre-wrap;
-	flex-grow: 2;
-	order: 1;
+	font-weight: lighter;
 }
 .itemResponse {
 	justify-self: right;
@@ -149,9 +156,9 @@
 }
 .signatureBox {
 	padding: 0;
-	/*border: 1px solid darkgray;
-	*/
+	border: 2px solid darkgray;
 }
+
 .toolbarIcon {
 	content: url("../bar_logo.png");
 	height: auto;
@@ -187,10 +194,11 @@
 	width: 2em;
 	height: 2em;
 }
-
+/* 
 .hasInteracted {
-	background-color: #f0fff0;
-}
+	background-color: #70c270;
+} */
+
 .invalidated {
 	background-color: #ffeeee;
 	border: 1px dotted #ffdddd;
@@ -214,6 +222,13 @@
 	right: 1px;
 	z-index: 500;
 }
+.subDocItem {
+	scale: 50%;
+	
+	/*
+	display: inherit;*/
+}
+
 
 .printableDocument .titleBlock {
 	display: flex;
@@ -228,7 +243,6 @@
 	font-weight: bold;
 
 	vertical-align: text-top;
-
 }
 .subtitleBlock .pageSubTitle {
 	font-weight: lighter;
@@ -237,59 +251,17 @@
 	display: flex;
 	font-weight: lighter;
 }
-.ctlCheckBox {
-	display: inline-flex;
-	flex-flow: row wrap;
-	flex-basis: 20%;
+
+.debugBorder {
+	border: 1px dotted red;
+	background-color: salmon;
 }
-#disabled_all {
-	border:1px dotted red
+/* FIXES FOR RANGE INPUT SCROLLING */
+
+/*
+input[type=range] {
+  pointer-events:none;
 }
-@media print {
-	* {
-		font-size: small;
-		background-color: white;
-		/*border: 1px dotted lightgrey*/
-	}
-	.printableDocument .headerIcon {
-		content: url("../logo.png");
-		width: 3em;
-		height: auto;
-		display: block;
-		float: left;
-		padding-right: 1em;
-}
-	.printableDocument {
-		position: fixed;
-		left: 0px;
-		right: 0px;
-		top: 0px;
-		bottom: 0px;
-		padding: 0px 0px 0px 0px;
-		margin: 0px 0px 0px 0px;
-	}
-	.subItemContainer {
-		display: flex;
-		flex-flow: row wrap;
-	}
-	.ctlCheckBox ons-icon {
-		break-after: avoid;
-	}
-	.ctlCheckBox {
-		display: inline-flex;
-		flex-wrap: nowrap;
-		flex-grow: 3;
-	}
-	.commandBar {
-		display: none;
-		visibility: hidden;
-	}
-	.topToolbar {
-		display: none;
-		visibility: hidden;
-	}
-	.debugpane {
-		display: none;
-		visibility: hidden;
-	}
-}
+input[type=range]::-webkit-slider-thumb {
+  pointer-events:auto;
+}*/

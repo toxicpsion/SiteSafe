@@ -156,14 +156,28 @@
 				<div class="renderCanvas"></div>
 			</ons-page>
 		</template>
+		
+		<template id="tpl_documentRenderer">
+			<ons-page id="p_docRender">
+					<ons-toolbar class="topToolbar">
+						<img class="toolbarIcon">
 
+							<div class="right" style='width: 80%; padding-right: .25em'>
+								 <ons-button class="saveButton"><ons-icon icon="save"></ons-icon>&nbsp;Save</ons-button>
+								 <ons-button onclick="document.getElementById('rootNavigator').popPage()"><ons-icon icon="ban" ></ons-icon> Cancel </ons-button>
+							</div>
+					</ons-toolbar>
+					<div class="renderCanvas"></div>
+			</ons-page>
+	</template>
+	
 		<template id="tpl_blankpage">
 			<ons-page id="p_blankPage"></ons-page>
 		</template>
 
 		<!-- FRAGMENT TEMPLATES-->
-		<template id="documentItem" class="tpl">
-			<ons-list-item class="docItem" expandable tappable>
+		<template id="documentItem">
+			<ons-list-item class="docItem" tappable expandable>
 				<div class="left">
 					<img class="list-item__thumbnail" src="" />
 				</div>
@@ -171,17 +185,20 @@
 					<span class="list-item__title"></span>
 					<span class="list-item__subtitle"></span>
 				</div>
-				<div class="right subdocumentControlArea">
-					<ons-button class="aButton" icon="plus"></ons-button>
+				<div class="right controlArea">
+			
 				</div>
-				<div class="expandable-content"></div>
+		<div class="expandable-content">
+			<ons-list class="subDocList"></ons-list>
+		</div>
 			</ons-list-item>
 		</template>
 
 		<template id="subdocumentItem">
-			<ons-list-item class="subDocItem" modifier="nodivider" tappable>
+			<ons-list-item class="subDocItem" modifier="nodivider" tappable >			
+
 				<div class="center">
-					<span class="list-item__title"></span>
+					<span class="list-item__title"></span>	
 					<span class="list-item__subtitle"></span>
 				</div>
 				<div class="right subdocumentControlArea"></div>

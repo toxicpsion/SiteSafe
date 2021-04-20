@@ -21,4 +21,18 @@ let UTIL = {
 		}
 		return true;
 	},
+	waitForDOMSelector: async (selector) => {
+		while (document.querySelector(selector) === null) {
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+		}
+			console.log("Waited for selector ",selector)
+		return document.querySelector(selector);
+	},
+	waitForDOMId: async (id) => {
+		while (document.getElementById(id) === null) {
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+		}
+		console.log("Waited for ID: ",id)
+		return document.getElementById(id);
+	},
 };

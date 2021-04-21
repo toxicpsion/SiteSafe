@@ -15,6 +15,22 @@ modal
 // eslint-disable-next-line no-unused-vars
 let sixWestPromiseAPI = {
 	APIServerDefault: "http://artisan.6west.ca:16022",
+	pushRemotePage: function pushRemotePage(url) {
+		return new Promise((resolve, reject) => {
+			setTimeout(() => {
+				reject({ status: 500, message: "Timed Out." });
+			}, 5000);
+
+			app.rootNavigator
+				.pushPage("http://sitesafe.6west.ca/admin", { timeout: 2000 })
+				.then((e) => {
+					resolve(e);
+				})
+				.catch((e) => {
+					reject(e);
+				});
+		});
+	},
 	sendLog: function sendLog(
 		message,
 		logmodule = "MAIN",
@@ -149,35 +165,76 @@ let sixWestPromiseAPI = {
 				reject({ status: 500, message: "Timed Out." });
 			}, 5000);
 
-			fetch(`${this.APIServerDefault}/user/login`, {
+			doFirstRun = function () {
+				fetch(`${sixWestPromiseAPI.APIServerDefault}/user/firstrun`, {
+					method: "post",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						username: username,
+					}),
+				})
+					.then((r) => r.json())
+					.then((r) => {
+						r.auth = JSON.parse(r.auth);
+						r.reserved = JSON.parse(r.reserved);
+						return r;
+					})
+					.then((user) => {
+						if (user.reserved.completedFirstRun) {
+							alert("firstrun completed");
+						} else {
+							alert("is firstrun");
+						}
+
+						resolve(user);
+						return;
+					})
+					.catch((e) => {
+						reject();
+					});
+				return;
+			};
+
+			fetch(`${sixWestPromiseAPI.APIServerDefault}/user/login`, {
 				method: "post",
 				headers: {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
 					username: username,
-					passhash: hex_sha1(password),
+					passhash: password.length ? hex_sha1(password) : "",
 				}),
 			})
+				.then((r) => {
+					if (r.status == 202) {
+						doFirstRun();
+						return;
+					} else if (r.status == 200) {
+						return r;
+					} else {
+						reject();
+					}
+				})
 				.then((r) => r.json())
 				.then((data) => {
-					if (data.res == 200) {
-						console.warn(data.user);
-						data.user.passhash = hex_sha1(password);
+					console.warn(data);
 
-						//Check Connected
-						app.log(data.user.name, "LOGIN");
-						sixWestPromiseAPI.lastPingTime = Date.now() / 1000;
+					//debugger;
 
-						resolve(data.user);
-					} else {
-						reject({ code: data.res });
-					}
+					data.user.passhash = hex_sha1(password);
+
+					//Check Connected
+					app.log(data.user.name, "LOGIN");
+					sixWestPromiseAPI.lastPingTime = Date.now() / 1000;
+
+					resolve(data.user);
 				});
 		});
 	},
 	doLogout: function () {
-		app.fs.remove("cache/userProfile").then((e) => {
+		app.fs.remove("userProfile").then((e) => {
 			console.debug(e);
 			app.currentUser = undefined;
 			delete app.currentUser;
@@ -215,9 +272,36 @@ let sixWestPromiseAPI = {
 					})
 						.then((r) => r.json())
 						.then((data) => {
-							console.log(data);
 							resolve(data);
 						});
+				}
+			});
+		});
+	},
+	listUsers: function (params = {}) {
+		return new Promise(function (resolve, reject) {
+			setTimeout(() => {
+				reject({ status: 500, message: "Timed Out." });
+			}, 5000);
+
+			sixWestPromiseAPI.isConnected().then((connected) => {
+				if (connected) {
+					fetch(`${sixWestPromiseAPI.APIServerDefault}/user/list`, {
+						method: "post",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							u: app.currentUser.username,
+							p: app.currentUser.passhash,
+							params: params,
+						}),
+					})
+						.then((r) => r.json())
+						.then((data) => {
+							resolve(data);
+						})
+						.catch((e) => reject(e));
 				}
 			});
 		});
@@ -259,7 +343,6 @@ let sixWestPromiseAPI = {
 							});
 						})
 						.catch((c) => {
-							debugger;
 							reject({ status: false, message: "Error in JSON response." });
 						});
 				} else {
@@ -367,7 +450,10 @@ let sixWestPromiseAPI = {
 
 			thisElement.appendChild(subControlElement);
 		};
-		let thisElement = ons.createElement(`<div class="controlItem"></div>`);
+
+		let thisElement = ons.createElement(
+			`<div class="printable controlItem"></div>`
+		);
 
 		switch (obj_JSON.type) {
 			// LABEL
@@ -375,7 +461,7 @@ let sixWestPromiseAPI = {
 				thisElement.appendChild(
 					ons.createElement(
 						`<div class="itemHeader">
-						<span class="itemTitle">${obj_JSON.text}</span>
+						<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
 						<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
 						</div>`
 					)
@@ -387,14 +473,14 @@ let sixWestPromiseAPI = {
 				thisElement.appendChild(
 					ons.createElement(
 						`<div class="itemHeader">
-						<span class="itemTitle">${obj_JSON.text}</span>
+						<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
 						<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
 						</div>`
 					)
 				);
 
 				let thisControl = ons.createElement(`
-					<div style="text-align:right;">
+				<div style="text-align:right;">
 					<div style="position: relative; bottom: 0px;" class="thisValue" id="fResp_${obj_JSON.id}">&nbsp;</div>						
 					
 					<ons-range  input-id="ibp_${obj_JSON.id}" value="0" max="5" min="1"></ons-range>	
@@ -403,13 +489,12 @@ let sixWestPromiseAPI = {
 						<div>|</div><div>|</div><div>|</div><div>|</div><div>|</div>
 					</div>
 					<div style="width: 100%; display: flex; justify-content: space-between; flex-grow: 1; font-size: xx-small;">
-					<div>Not Applicable</div><div></div><div></div><div></div><div>Immediate Danger</div>
-				</div>
+						<div>Not Applicable</div><div></div><div></div><div></div><div>Immediate Danger</div>
+					</div>
 				</div>`);
 				thisControl.querySelector("ons-range").addEventListener(
 					"input",
 					(e) => {
-						console.log(e);
 						vals = [
 							"Not Applicable",
 							"Acceptable",
@@ -427,44 +512,54 @@ let sixWestPromiseAPI = {
 			}
 			//CheckBox
 			case 2: {
-				return ons.createElement(`
+				thisElement.appendChild(
+					ons.createElement(`
 				<div class="formItem_checkbox">
 				<ons-checkbox input-id="fResp_${obj_JSON.id}"></ons-checkbox> 
 				<label for="fResp_${obj_JSON.id}">
 					${obj_JSON.text}
 				</label>
-				</div>`);
+				</div>`)
+				);
+				break;
 			}
 			//Text Input
 			case 3: {
-				return ons.createElement(
-					`<div class="itemHeader">
-						${obj_JSON.text}
-						<ons-input 
-							style="width: 100%;border: 1px dotted #CCCCCC; 
-										border-radius: .2em; 
-										background-color: #EEEEEE;" 
-							id="o_${obj_JSON.id}" 
-							input-id="fResp_${obj_JSON.id}" 
-							float>
-						</ons-input>
-					</div>`
+				thisElement.appendChild(
+					ons.createElement(`<div class="itemHeader">${obj_JSON.text}</div>`)
 				);
+				thisElement.appendChild(
+					ons.createElement(`	
+					<ons-input style="width: 100%;border: 1px dotted #CCCCCC; 
+							border-radius: .2em; 
+							background-color: #EEEEEE;" 
+				id="o_${obj_JSON.id}" 
+				input-id="fResp_${obj_JSON.id}" 
+				float>
+			</ons-input>`)
+				);
+				break;
 			}
 			//Multiline Text
 			case 4: {
-				return ons.createElement(`
-				<div>
-				<div class="itemHeader">${obj_JSON.text}</div>
-				<textarea id="fResp_${obj_JSON.id}" 
+				thisElement.appendChild(
+					ons.createElement(`<div class="itemHeader">${obj_JSON.text}</div>`)
+				);
+				thisElement.appendChild(
+					ons.createElement(`<textarea id="fResp_${obj_JSON.id}" 
 				style="resize: none; 
 						 height: ${obj_JSON.size ? obj_JSON.size : 70}vh;
 						width: 90vw; 
 				border-radius: .25em"></textarea>
-				</div>`);
+				`)
+				);
+				break;
 			}
 			case 5: {
-				return ons.createElement(`<img src="${obj_JSON.src}">`);
+				thisElement.appendChild(
+					ons.createElement(`<img src="${obj_JSON.src}">`)
+				);
+				break;
 			}
 			//Signature
 			case 6: {
@@ -480,11 +575,36 @@ let sixWestPromiseAPI = {
 				signaturePad.penColor = "blue";
 
 				signaturePad.onEnd = function (e) {
-					console.log(this);
 					e.target.setAttribute("data", JSON.stringify(this.toData()));
 				};
 
-				return s;
+				let controls = ons.createElement(`<div class="controls">
+					</div>`);
+				let addSig = ons.createElement(`<ons-button icon="plus"></ons-button>`);
+				let removeSig = ons.createElement(
+					`<ons-button icon="trash"></ons-button>`
+				);
+				addSig.addEventListener("click", function (e) {
+					signaturePad.off();
+
+					newSig = sixWestPromiseAPI.getFillableControlFromJSON({
+						id: `signature_${
+							document.querySelectorAll(".signatureBox").length
+						}`,
+						type: 6,
+					});
+					thisElement.appendChild(newSig);
+					addSig.remove();
+				});
+
+				removeSig.addEventListener("click", function () {
+					thisElement.remove();
+				});
+				controls.appendChild(addSig);
+				controls.appendChild(removeSig);
+				thisElement.appendChild(controls);
+				thisElement.appendChild(s);
+				break;
 			}
 			default: {
 				return ons.createElement(
@@ -499,6 +619,128 @@ let sixWestPromiseAPI = {
 
 		return thisElement;
 	},
+	getPrintableControlFromJSON: function getPrintableControlFromJSON(obj_JSON) {
+		//obj_JSON.desc = obj_JSON.desc ? obj_JSON.desc : "";
+		addSubItems = () => {
+			thisElement.classList.add("hasSubItems");
+
+			let subControlElement = thisElement.querySelector(".subItems");
+			if (!subControlElement) {
+				subControlElement = thisElement;
+			}
+			obj_JSON.data.forEach((subelement) => {
+				subControlElement.appendChild(
+					sixWestPromiseAPI.getPrintableControlFromJSON(subelement)
+				);
+			});
+		};
+
+		let thisElement = ons.createElement(`<div class="controlItem"></div>`);
+
+		switch (obj_JSON.type) {
+			case 0: {
+				//LABEL
+
+				if (obj_JSON.text) {
+					thisElement.appendChild(
+						ons.createElement(`
+						<span class="itemHeader">
+							${obj_JSON.text}
+						</span>`)
+					);
+				}
+				if (obj_JSON.desc) {
+					thisElement.appendChild(
+						ons.createElement(`
+						<span class="itemDesc">
+							${obj_JSON.desc}				
+						</span>`)
+					);
+				}
+
+				if (obj_JSON.data) {
+					thisElement.appendChild(
+						ons.createElement(`<div class="subItems"></div>`)
+					);
+					addSubItems();
+				}
+
+				return thisElement;
+			}
+			case 1: {
+				//RANGE Slider
+
+				thisElement.appendChild(
+					ons.createElement(`
+					<div class="itemHeader">${obj_JSON.text}
+						<div class="itemResponse">${obj_JSON.value}</div>		
+					</div>`)
+				);
+				thisElement.appendChild(
+					ons.createElement(`<div class="itemDesc">${obj_JSON.desc}</div>	`)
+				);
+				return thisElement;
+			}
+
+			case 2: {
+				//checkbox
+				thisElement.appendChild(
+					ons.createElement(`
+					<div class="ctlCheckBox">
+						${
+							obj_JSON.value
+								? "<ons-icon icon='check-circle'></ons-icon>"
+								: "<ons-icon icon='circle'></ons-icon>"
+						}	&nbsp;<div class="">${obj_JSON.text}</div>
+					</div>`)
+				);
+				return thisElement;
+			}
+			case 3: {
+				// text input
+				thisElement.appendChild(
+					ons.createElement(`
+					<div class="itemHeader">${obj_JSON.text ? obj_JSON.text + " :" : ""} ${
+						obj_JSON.value
+					}</div>`)
+				);
+				return thisElement;
+			}
+			case 4: {
+				thisElement.appendChild(
+					ons.createElement(`<div class="itemHeader">${obj_JSON.text}</div>`)
+				);
+				thisElement.appendChild(
+					ons.createElement(
+						`<pre>${obj_JSON.value ? obj_JSON.value : "None"}</pre>`
+					)
+				);
+				return thisElement;
+			}
+			case 5: {
+				//UNNASIGNED
+				thisElement.appendChild(ons.createElement("<div>[5]</div>"));
+				return thisElement;
+			}
+			case 6: {
+				//signature
+				let canvas = ons.createElement(` 
+				<canvas class="signatureBox"></canvas>`);
+				thisElement.appendChild(canvas);
+
+				let signaturePad = new SignaturePad(canvas);
+				signaturePad.off();
+				// setup pen inking
+				signaturePad.minWidth = 0.1;
+				signaturePad.maxWidth = 1.6;
+				signaturePad.penColor = "blue";
+				try {
+					signaturePad.fromData(obj_JSON.value);
+				} catch {}
+				return thisElement;
+			}
+		}
+	},
 };
 
 let app = {
@@ -510,10 +752,10 @@ let app = {
 	preferences: {
 		//DEFAULTS
 		//reset: delete saved prefs on startup
-		debug: false,
+		debug: true,
 		reset: false,
 		minimizeDataUse: false,
-		pingTimeout: 5,
+		pingTimeout: 600,
 		_description: {
 			debug: "Enable Network debugging",
 			reset: "Clear Saved Settings on next start",
@@ -552,26 +794,28 @@ let app = {
 											let removeDir = (path) => {
 												return new Promise((resolve, reject) => {
 													app.fs
-														.list(path, "d")
-														.then((dirs) => {
-															dirs.forEach((dir) => {
-																removeDir(dir);
+														.list(path, "f")
+														.then((files) => {
+															files.forEach((file) => {
+																console.debug("removing file: ", file);
+																app.fs.remove(file);
 															});
 														})
 														.then(() => {
-															app.fs.list(path, "f").then((files) => {
-																files.forEach((file) => {
-																	app.fs.remove(file);
+															app.fs.list(path, "d").then((dirs) => {
+																dirs.forEach((dir) => {
+																	removeDir(dir);
 																});
 															});
 														})
-														.finally(() => resolve(true));
+														.finally(() => resolve(true))
+														.catch((e) => reject(e));
 												});
 											};
-										
-										removeDir("").then(() =>{
-											console.log("removed cache");
-										})
+
+											removeDir("").then(() => {
+												app.log("Removed Filesystem Cache", "LOADPREFS");
+											});
 										})
 
 										.catch(() => {
@@ -724,10 +968,10 @@ let app = {
 			});
 
 		sixWestPromiseAPI.loadProvisioning().then(() => {
-			app.fs.exists("cache/userProfile").then((e) => {
+			app.fs.exists("userProfile").then((e) => {
 				if (e) {
 					console.debug("Stored User Profile");
-					app.fs.readJSON("cache/userProfile").then((storedUser) => {
+					app.fs.readJSON("userProfile").then((storedUser) => {
 						app.currentUser = storedUser;
 
 						app.rootNavigator.resetToPage("tpl_tabNavigator");
@@ -833,8 +1077,11 @@ let app = {
 							)
 							.then((e) => {
 								if (e.isFirstRun) {
+									//e.auth = JSON.parse(e.auth);
+									//e.reserved = JSON.parse(e.reserved);
+
 									app.rootNavigator.pushPage("tpl_accountPage", {
-										data: { mode: "verify" },
+										data: e,
 									});
 									return;
 								} else {
@@ -843,7 +1090,7 @@ let app = {
 									app.currentUser = e;
 									if (document.getElementById("remember").checked) {
 										app.fs
-											.write("cache/userProfile", app.currentUser)
+											.write("userProfile", app.currentUser)
 											.then(console.debug("Saved User"));
 									}
 									app.rootNavigator.resetToPage("tpl_tabNavigator");
@@ -902,40 +1149,44 @@ let app = {
 		console.debug("pageShowHandler stub: " + event.target.id);
 		switch (event.target.id) {
 			case "p_accountPage": {
-				document.querySelector(".topToolbar").style.visibility = "hidden";
+				if (event.target.data.isFirstRun) {
+					alert(JSON.stringify(event.target.data));
+				} else {
+					document.querySelector(".topToolbar").style.visibility = "hidden";
 
-				let cBar = document.querySelector(".commandBar");
-				cBar.innerHTML = "";
+					let cBar = document.querySelector(".commandBar");
+					cBar.innerHTML = "";
 
-				cBar.appendChild(
-					ons.createElement(
-						`<ons-button class="cancelButton" icon="back">&nbsp;Close</ons-button>`
-					)
-				);
-				cBar.appendChild(
-					ons.createElement(
-						`<ons-button class="saveButton disabled" icon="save">&nbsp;Save</ons-button>`
-					)
-				);
-				cBar
-					.querySelector(".cancelButton")
-					.addEventListener("click", function () {
-						cBar.style.visibility = "hidden";
-						cBar.innerHTML = "";
-						document.querySelector(".topToolbar").style.visibility = "visible";
-						app.rootNavigator.popPage();
-					});
+					cBar.appendChild(
+						ons.createElement(
+							`<ons-button class="cancelButton" icon="back">&nbsp;Close</ons-button>`
+						)
+					);
+					cBar.appendChild(
+						ons.createElement(
+							`<ons-button class="saveButton disabled" icon="save">&nbsp;Save</ons-button>`
+						)
+					);
+					cBar
+						.querySelector(".cancelButton")
+						.addEventListener("click", function () {
+							cBar.style.visibility = "hidden";
+							cBar.innerHTML = "";
+							document.querySelector(".topToolbar").style.visibility =
+								"visible";
+							app.rootNavigator.popPage();
+						});
 
-				cBar.style.visibility = "visible";
+					cBar.style.visibility = "visible";
 
-				//let page = document.getElementById("p_accountPage");
-				let canvas = document.querySelector("#p_accountPage .renderCanvas");
+					//let page = document.getElementById("p_accountPage");
+					let canvas = document.querySelector("#p_accountPage .renderCanvas");
 
-				canvas.innerHTML = `
+					canvas.innerHTML = `
 			<img class="userImage"><br>
 			<div>
 				<div class="username">${app.currentUser.name}</div>
-				<div class="email">${app.currentUser.email}</div>
+				<div class="email">${app.currentUser.username}</div>
 			</div>
 			<hr>
 			<div>${app.currentUser.phone || ""}</div><hr>
@@ -944,14 +1195,18 @@ let app = {
 				<ons-button class="logoutButton" icon="times">&nbsp;Logout</ons-button>
 			</div>
 			`;
-				canvas
-					.querySelector(".logoutButton")
-					.addEventListener("click", sixWestPromiseAPI.doLogout);
-
+					canvas
+						.querySelector(".logoutButton")
+						.addEventListener("click", sixWestPromiseAPI.doLogout);
+				}
 				break;
 			}
 			case "p_documents": {
 				app.updateDocumentList();
+				break;
+			}
+			case "p_reference": {
+				app.updateReferenceList();
 				break;
 			}
 			case "p_docRender": {
@@ -960,12 +1215,12 @@ let app = {
 				sixWestPromiseAPI
 					.fetchResource("templates/" + event.target.data.templateID)
 					.then((a) => {
-						console.log(a);
+						app.log(`Fetched Template ${event.target.data.templateID}`);
+
 						template = a;
 						UTIL.waitForDOMSelector("#p_docRender .renderCanvas").then(
 							(canvas) => {
 								a.data.forEach((item) => {
-									console.log(item);
 									let thisItem = sixWestPromiseAPI.getFillableControlFromJSON(
 										item
 									);
@@ -974,7 +1229,6 @@ let app = {
 										this.classList.remove("invalidated");
 
 										this.querySelectorAll(".invalidated").forEach((e) => {
-											console.log(e);
 											e.classList.add("hasInteracted");
 											e.classList.remove("invalidated");
 										});
@@ -1003,6 +1257,7 @@ let app = {
 
 						//Default Form Validator
 						let thisValidator = function (response, templateItem) {
+							console.log(response.type);
 							switch (response.type) {
 								case "text":
 								case "textarea": {
@@ -1017,10 +1272,6 @@ let app = {
 									break;
 								}
 								case "range": {
-									console.log(
-										//range element inside ons-range ui wrapper
-										response.parentNode.parentNode.parentNode.classList
-									);
 									if (
 										response.parentNode.parentNode.parentNode.classList.contains(
 											"hasInteracted"
@@ -1028,9 +1279,7 @@ let app = {
 									) {
 										return true;
 									} else {
-										response.parentNode.parentNode.parentNode.classList.add(
-											"invalidated"
-										);
+										response.parentNode.parentNode.classList.add("invalidated");
 										return false;
 									}
 									break;
@@ -1049,7 +1298,7 @@ let app = {
 
 						//load remote validator from template DBentry
 						if (typeof template.validator == "string") {
-							console.log("Loaded Validator from template.");
+							app.log("Loaded Validator from template.");
 							thisValidator = new Function(
 								"response",
 								"templateItem",
@@ -1073,42 +1322,17 @@ let app = {
 									response.classList.add("invalidated");
 								}
 							} catch {
-								console.log(
-									"Validator exception.",
-									JSON.stringify([response, thisData])
+								app.log(
+									"Validator exception." + JSON.stringify([response, thisData])
 								);
 							}
 
 							switch (response.type) {
-								case "range": {
-									let vals = [
-										"Not Applicable",
-										"Acceptable",
-										"Minor Risk",
-										"Serious Risk",
-										"Immediate Danger",
-									];
-
-									if (response.value > 3) {
-										response.classList.add("invalidated");
-
-										console.warn(thisData.text, vals[response.value - 1]);
-										alertItems.push(
-											JSON.parse(
-												`{"${thisData.text}": "${vals[response.value - 1]}"}`
-											)
-										);
-
-										urgentAlert = true;
-									}
-									thisResp = response.value;
-									break;
-								}
-
 								case "text":
 								case "textarea": {
 									response.value = response.value.trim();
-									thisResp = response.value;
+									console.log(response.value);
+									thisResp = response.value ? response.value : "";
 									break;
 								}
 								case "checkbox": {
@@ -1118,14 +1342,14 @@ let app = {
 
 								default: {
 									if (response.classList.contains("signatureBox")) {
-										thisResp = response.getAttribute("data");
-
 										try {
-											thisResp = JSON.parse(thisResp)[0];
-										} catch { //Empty Signature?
+											thisResp = response.getAttribute("data");
+											thisResp = JSON.parse(thisResp);
+										} catch {
+											//Empty Signature?
 											thisResp = [];
 										}
-										debugger;
+
 										break;
 									}
 
@@ -1151,8 +1375,8 @@ let app = {
 							}
 						}
 						//TODO: [SIT-5] Improve keymapper scope to .state.CurrentUser and .parentFBDoc
-						pendingRequest.assigned = [app.currentUser.email];
-						pendingRequest.author = app.currentUser.email;
+						pendingRequest.auth = [app.currentUser.username];
+						pendingRequest.author = app.currentUser.username;
 
 						pendingRequest.authorName = app.currentUser.name;
 
@@ -1168,15 +1392,17 @@ let app = {
 							//TODO: [SIT-4] Add Multiple Root Template Support
 							//if (event.target.data.templateID < 100) {
 							if (true) {
-								console.log("Creating in documents");
-								console.log(pendingRequest);
-
-								sixWestPromiseAPI.putResource(pendingRequest).then((e) => {
-									console.log(e);
-									if (e.status.success) {
-										rootNavigator.popPage();
-									}
-								});
+								sixWestPromiseAPI
+									.putResource(pendingRequest)
+									.then((e) => {
+										if (e.status.success) {
+											app.log("Created document:");
+											rootNavigator.popPage();
+										}
+									})
+									.catch((e) => {
+										alert("put failed");
+									});
 							} else {
 								console.log(
 									"creating Leaf Node for " + event.target.data.parentID
@@ -1287,7 +1513,7 @@ let app = {
 							.querySelector(".renderCanvas").content;
 
 						cordova.plugins.printer.print(toPrint, { margin: false }, (res) => {
-							console.log("Printing: " + event.target.data);
+							app.log("Printing: " + event.target.data);
 
 							cBar.innerHTML = "";
 							cBar.style.visibility = "hidden";
@@ -1301,8 +1527,6 @@ let app = {
 					.getElementById("p_docView")
 					.querySelector(".renderCanvas");
 
-				debugger;
-
 				canvas.appendChild(app.renderDocument(event.target.data));
 
 				break;
@@ -1312,67 +1536,138 @@ let app = {
 			}
 		}
 	},
+	updateReferenceList: function updateReferenceList() {
+		let refList = document.getElementById("l_reference");
+		sixWestPromiseAPI.listResource("reference").then((resourceList) => {
+			debugger;
+			let newResources = UTIL.getNewObjectKeys(
+				resourceList,
+				app.state.referenceList
+			);
+
+			let removedResources = UTIL.getNewObjectKeys(
+				app.state.referenceList,
+				resourceList
+			);
+
+			app.state.referenceList = resourceList;
+
+			if (Object.keys(removedResources).length) {
+				for (const key in removedResources) {
+					document.getElementById(removedResources[key].id).remove();
+					//delete app.state.documents[key]
+				}
+			} else {
+				console.log("NoUpdates()");
+			}
+
+			if (Object.keys(newResources).length) {
+				debugger;
+			}
+
+			resourceList.forEach((i) => {
+				console.log(i);
+				let thisJobItem = document
+					.getElementById("documentItem")
+					.cloneNode(true);
+
+				thisJob = thisJobItem.content.querySelector("ons-list-item");
+
+				thisJob.querySelector(".list-item__thumbnail").src =
+					"images/list_icon.png";
+
+				thisJob.querySelector(".list-item__title").innerHTML = i.title;
+
+				thisJob.querySelector(".list-item__subtitle").innerHTML = i.subtitle;
+
+				thisJob.addEventListener("click", (e) => {
+					rootNavigator.pushPage(i.url);
+				});
+
+				refList.appendChild(thisJob);
+			});
+		});
+	},
 	updateDocumentList: function () {
-		console.log("Updating document List");
 		let docList = document.getElementById("documentList");
 		if (!document.getElementById("d_actionStrip")) {
 			let d_actionStrip = ons.createElement(
-				'<div id="d_actionStrip" style="position: relative; top: 1em; white-space: nowrap; margin: 0px auto; text-align: center;"></div>'
+				'<div id="d_actionStrip" style=""></div>'
 			);
+			if (app.currentUser.auth.rules.includes("create")) {
+				let b_CreateNew = ons.createElement(
+					'<ons-button icon="plus"><span>Create New</span></ons-button>'
+				);
+				b_CreateNew.addEventListener(
+					"click",
+					function () {
+						let actionbuttons = [];
 
-			let b_CreateNew = ons.createElement(
-				'<ons-button icon="plus">&nbsp;&nbsp;CREATE NEW</ons-button>'
-			);
-			b_CreateNew.addEventListener(
-				"click",
-				function () {
-					let actionbuttons = [];
-
-					debugger;
-					app.state.templateList.forEach((t) => {
-						if (t.id.length <= 4) {
-							actionbuttons.push(
-								JSON.parse(`{ "label": "${t.friendlyName}", "id": "${t.id}" }`)
-							);
-						}
-					});
-
-					actionbuttons.push(
-						JSON.parse('{ "label": "Cancel", "id": "cancel"}')
-					);
-
-					ons
-						.openActionSheet({
-							id: "b_newdoc",
-							title: `New...`,
-							cancelable: true,
-							buttons: actionbuttons,
-						})
-
-						.then(function (index) {
-							if (index < 0) {
-								// click outside menu (-1) cancels
-								return;
-							}
-							switch (actionbuttons[index].id) {
-								case "cancel":
-									break;
-								default:
-									console.debug("New: ", actionbuttons[index].id);
-									document
-										.getElementById("rootNavigator")
-										.pushPage("tpl_documentRenderer", {
-											data: {
-												templateID: actionbuttons[index].id,
-												parentID: 0,
-											},
-										});
+						app.state.templateList.forEach((t) => {
+							if (t.id.length <= 4) {
+								actionbuttons.push(
+									JSON.parse(
+										`{ "label": "${t.friendlyName}", "id": "${t.id}" }`
+									)
+								);
 							}
 						});
-				},
-				false
-			);
-			d_actionStrip.append(b_CreateNew);
+
+						actionbuttons.push(
+							JSON.parse('{ "label": "Cancel", "id": "cancel"}')
+						);
+
+						ons
+							.openActionSheet({
+								id: "b_newdoc",
+								title: `New...`,
+								cancelable: true,
+								buttons: actionbuttons,
+							})
+
+							.then(function (index) {
+								if (index < 0) {
+									// click outside menu (-1) cancels
+									return;
+								}
+								switch (actionbuttons[index].id) {
+									case "cancel":
+										break;
+									default:
+										console.debug("New: ", actionbuttons[index].id);
+										document
+											.getElementById("rootNavigator")
+											.pushPage("tpl_documentRenderer", {
+												data: {
+													templateID: actionbuttons[index].id,
+													parentID: 0,
+												},
+											});
+								}
+							});
+					},
+					false
+				);
+				d_actionStrip.append(b_CreateNew);
+			}
+			if (app.currentUser.auth.rules.includes("admin")) {
+				let b_manageDocs = ons.createElement(
+					'<ons-button icon="key"><span>Manage</span></ons-button>'
+				);
+				b_manageDocs.addEventListener(
+					"click",
+					() => {
+						sixWestPromiseAPI
+							.pushRemotePage("http://sitesafe.6west.ca/admin/")
+							.catch((e) => {
+								alert("Resource Unavailable");
+							});
+					},
+					false
+				);
+				d_actionStrip.append(b_manageDocs);
+			}
+
 			docList.parentNode.append(d_actionStrip);
 		}
 
@@ -1394,6 +1689,8 @@ let app = {
 		});
 
 		sixWestPromiseAPI.listResource("documents").then((resourceList) => {
+			console.debug("updateDocuments");
+
 			let newDocuments = UTIL.getNewObjectKeys(
 				resourceList,
 				app.state.documentList
@@ -1406,14 +1703,17 @@ let app = {
 
 			app.state.documentList = resourceList;
 
+			console.debug("## NEW DOCUMENTS ######");
+			console.table(newDocuments);
+
+			console.debug("## REMOVED DOCUMENTS ##");
+			console.table(removedDocuments);
+
 			if (Object.keys(removedDocuments).length) {
 				for (const key in removedDocuments) {
-					console.log("removing: ", removedDocuments[key]);
 					document.getElementById(removedDocuments[key].id).remove();
 					//delete app.state.documents[key]
 				}
-			} else {
-				console.log("removing: none.");
 			}
 
 			if (Object.keys(newDocuments).length) {
@@ -1423,7 +1723,7 @@ let app = {
 
 				for (const key in newDocuments) {
 					i = newDocuments[key];
-					if (i.root_node == "0") {
+					if (i.root_node.length <= 4) {
 						d.toplevel.push(i.id);
 					} else {
 						d.children.push(i.id);
@@ -1455,12 +1755,10 @@ let app = {
 							itemControls.appendChild(btn);
 
 							var bClickHandler = function (event) {
-								thisItem.toggleAttribute("expandable");
-								console.log(thisItem);
+								//	thisItem.toggleAttribute("expandable");
 
 								//thisItem.querySelector('.expandable-content').remove()
 
-								console.log(event);
 								event.stopPropagation();
 								let cl = event.target.classList;
 
@@ -1541,6 +1839,10 @@ let app = {
 											});
 										break;
 									}
+									case "assign": {
+										app.assignDocument(thisDocument);
+										break;
+									}
 								}
 							};
 
@@ -1616,7 +1918,6 @@ let app = {
 								parseInt(thisDocument.createdTimeUTC)
 							).toDateString();
 
-							console.log(thisDocument);
 							UTIL.waitForDOMId(thisDocument.root_node).then((parentNode) => {
 								let thisSubListItem = document
 									.getElementById("subdocumentItem")
@@ -1635,12 +1936,12 @@ let app = {
 									t.friendlyName;
 
 								thisItem.querySelector(".list-item__subtitle").innerHTML =
-									thisDocument.author +
-									" : " +
 									thisDocument.createdTimeLocalString;
+
 								//	thisSubListItem.content.querySelector(".list-item__thumbnail").src =
 								//		"images/list_icon.png";
 								//thisItem.animation = "fadein 1s ease-in-out;"
+
 								var gestureD = ons.GestureDetector(thisItem);
 
 								gestureD.on("hold click", function (ev) {
@@ -1649,7 +1950,7 @@ let app = {
 										case "click": {
 											sixWestPromiseAPI
 												.fetchResource("templates/" + thisDocument.template)
-												.then((e) => console.log(e, thisDocument))
+												.then((e) => console.warn(e, thisDocument))
 
 												//debugger;
 
@@ -1699,9 +2000,7 @@ let app = {
 											break;
 										}
 										default: {
-											console.warn(
-												"UnHandled Event: " + ev.type + " : " + this.id
-											);
+											app.log("UnHandled Event: " + ev.type + " : " + this.id);
 										}
 									}
 								});
@@ -1728,7 +2027,7 @@ let app = {
 																	data: thisDocument,
 																});
 															})
-															.catch((e) => console.log(e));
+															.catch((e) => app.log(e));
 													})
 													.catch((e) => console.error(e));
 											});
@@ -1747,7 +2046,6 @@ let app = {
 	renderDocument: function (thisDoc) {
 		let cv = ons.createElement(`<div class="printableDocument"></div>`);
 		let template = thisDoc.templateData.data;
-		debugger;
 		cv.innerHTML = `
 							<img class="headerIcon">
 								<div class="titleBlock">
@@ -1761,6 +2059,8 @@ let app = {
 								<div class="pageAuthor">Completed by: ${thisDoc.authorName}</div>
 								`;
 
+		console.log(thisDoc.data);
+		console.log(template);
 		template.forEach(function (i) {
 			//Map Response Values
 			i.value = thisDoc.data[i.id];
@@ -1769,11 +2069,102 @@ let app = {
 					si.value = thisDoc.data[si.id];
 				});
 			}
-			//	let thisItem = app.getPrintableControlFromJSON(i);
-			//	cv.appendChild(thisItem);
+			let thisItem = sixWestPromiseAPI.getPrintableControlFromJSON(i);
+			cv.appendChild(thisItem);
 		});
 
 		return cv;
+	},
+	assignDocument: function (thisDoc) {
+		//Remove old List if exists
+		var dialog = document.getElementById("my-alert-dialog");
+		if (dialog) {
+			dialog.remove();
+		}
+
+		dialog = ons.createElement(
+			`<ons-alert-dialog id="my-alert-dialog" modifier="rowfooter">
+								<div class="alert-dialog-title">Assign users</div>
+								<div class="alert-dialog-content">
+								</div>
+								<div class="alert-dialog-footer">
+									<ons-alert-dialog-button onclick="
+									document
+										.getElementById('my-alert-dialog')
+										.hide();
+									">Cancel</ons-alert-dialog-button>
+									<ons-alert-dialog-button class="OKbutton">OK</ons-alert-dialog-button>
+								</div>
+							</ons-alert-dialog>`,
+			{ append: true }
+		);
+
+		let dContent = document.querySelector(".alert-dialog-content");
+		let userTable = ons.createElement(
+			`<ons-list modifier="inset" class="assignUserList"></ons-list>`
+		);
+
+		sixWestPromiseAPI.listUsers().then((users) => {
+			debugger;
+			users.forEach((user) => {
+				let row = document.getElementById("genericListItem").cloneNode(true);
+
+				row.content.querySelector(".list-item__thumbnail").parentNode.remove();
+
+				row.content.querySelector(".list-item__title").innerHTML = user.name
+					? user.name
+					: user.username;
+
+				//beware: leave this subtitle; it is used to map back on submit.
+				row.content.querySelector(".list-item__subtitle").innerHTML =
+					user.username;
+
+				if (thisDoc.auth.includes(user.username)) {
+					row.content
+						.querySelector("ons-list-item")
+						.classList.add("userIsSelected");
+				}
+				userTable.appendChild(row.content);
+			});
+
+			dContent.appendChild(userTable);
+
+			userTable.querySelectorAll("ons-list-item").forEach((u) => {
+				u.addEventListener("click", function () {
+					this.classList.toggle("userIsSelected");
+				});
+			});
+
+			dialog.querySelector(".OKbutton").addEventListener("click", () => {
+				let updateRequest = { assigned: [] };
+
+				userTable.querySelectorAll(".userIsSelected").forEach((u) => {
+					updateRequest.assigned.push(
+						u.querySelector(".list-item__subtitle").innerText
+					);
+				});
+
+				console.log(updateRequest.assigned.join(" "));
+				//TODO
+			});
+			/* 		window.FirebasePlugin.updateDocumentInFirestoreCollection(
+						docID,
+						updateRequest,
+						"documents",
+						() => {
+							app.notify("Updated Successfully");
+							dialog.hide();
+						},
+						(e) => {
+							app.notify("Updated Failed");
+							dialog.hide();
+							console.error(e);
+						}
+					); */
+			//DocID
+		});
+
+		dialog.show();
 	},
 };
 

@@ -22,7 +22,7 @@ let sixWestPromiseAPI = {
 			}, 5000);
 
 			app.rootNavigator
-				.pushPage("http://sitesafe.6west.ca/admin", { timeout: 2000 })
+				.pushPage(url, { timeout: 2000 })
 				.then((e) => {
 					resolve(e);
 				})
@@ -55,8 +55,9 @@ let sixWestPromiseAPI = {
 			});
 	},
 	isConnected: async function isConnected() {
-		return await new Promise((resolve, reject) => {
-			if (navigator.connection.type == Connection.UNKNOWN) reject();
+		console.log("isConnected(): ");
+		let conn = await new Promise((resolve, reject) => {
+			if (navigator.connection.type == Connection.UNKNOWN) resolve(false);
 
 			if (navigator.connection.type == Connection.NONE) {
 				resolve(false);
@@ -66,10 +67,7 @@ let sixWestPromiseAPI = {
 			) {
 				sixWestPromiseAPI
 					.pingServer()
-					.then((pingResponse) => {
-						console.debug(pingResponse);
-						resolve(pingResponse);
-					})
+					.then((pingResponse) => resolve(pingResponse))
 					.catch(() => resolve(false));
 			} else if (
 				navigator.connection.type != Connection.NONE &&
@@ -90,6 +88,8 @@ let sixWestPromiseAPI = {
 				resolve(false);
 			}
 		});
+		console.log(conn);
+		return conn;
 	},
 	pingServer: function pingServer(host = sixWestPromiseAPI.APIServerDefault) {
 		// eslint-disable-next-line no-unused-vars
@@ -99,8 +99,6 @@ let sixWestPromiseAPI = {
 				(sixWestPromiseAPI.lastPingTime || 0) + app.preferences.pingTimeout;
 
 			if (pingTargetTime - thisRequestTime < 0) {
-				//console.debug("Ping APIServer");
-
 				clearTimeout(sixWestPromiseAPI.pinger);
 
 				sixWestPromiseAPI.pinger = setTimeout(
@@ -154,6 +152,7 @@ let sixWestPromiseAPI = {
 			} else {
 				console.debug("Not Provisioned");
 			}
+			return false;
 		} else {
 			//fetch
 			return false;
@@ -197,6 +196,28 @@ let sixWestPromiseAPI = {
 				return;
 			};
 
+			switch (navigator.connection.type) {
+				case Connection.WIFI:
+				case Connection.ETHERNET: {
+					alert("DIRECT CONN");
+					break;
+				}
+				case Connection.CELL:
+				case Connection.CELL_4G:
+				case Connection.CELL_3G:
+				case Connection.CELL_2G: {
+					alert("MOBILE DATA");
+					break;
+				}
+				case Connection.UNKNOWN: {
+					alert("UNKNOWN CONN");
+					break;
+				}
+				default: {
+					alert("DEFAULTCONN")
+				}
+			}
+
 			fetch(`${sixWestPromiseAPI.APIServerDefault}/user/login`, {
 				method: "post",
 				headers: {
@@ -219,14 +240,9 @@ let sixWestPromiseAPI = {
 				})
 				.then((r) => r.json())
 				.then((data) => {
-					console.warn(data);
-
-					//debugger;
-
+					//populate our passhash, as server doesn't send it.
 					data.user.passhash = hex_sha1(password);
 
-					//Check Connected
-					app.log(data.user.name, "LOGIN");
 					sixWestPromiseAPI.lastPingTime = Date.now() / 1000;
 
 					resolve(data.user);
@@ -1658,7 +1674,7 @@ let app = {
 					"click",
 					() => {
 						sixWestPromiseAPI
-							.pushRemotePage("http://sitesafe.6west.ca/admin/")
+							.pushRemotePage("https://sitesafe.6west.ca/admin/manager.html")
 							.catch((e) => {
 								alert("Resource Unavailable");
 							});

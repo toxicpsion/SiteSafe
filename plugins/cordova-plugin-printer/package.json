@@ -1,27 +1,24 @@
 {
-  "_from": "cordova-plugin-printer",
+  "_from": "git+https://github.com/toxicpsion/cordova-plugin-printer.git",
   "_id": "cordova-plugin-printer@0.8.0",
   "_inBundle": false,
-  "_integrity": "sha512-Olu2SuCedztO6PtXoHwA4J/emOxZlj64Ya9aZhcxoXJITG+RDF6Nb3oThcpYPTa73+py+gPF7r19lv3Q8RR/Nw==",
+  "_integrity": "",
   "_location": "/cordova-plugin-printer",
   "_phantomChildren": {},
   "_requested": {
-    "type": "tag",
-    "registry": true,
-    "raw": "cordova-plugin-printer",
-    "name": "cordova-plugin-printer",
-    "escapedName": "cordova-plugin-printer",
-    "rawSpec": "",
-    "saveSpec": null,
-    "fetchSpec": "latest"
+    "type": "git",
+    "raw": "https://github.com/toxicpsion/cordova-plugin-printer.git",
+    "rawSpec": "https://github.com/toxicpsion/cordova-plugin-printer.git",
+    "saveSpec": "git+https://github.com/toxicpsion/cordova-plugin-printer.git",
+    "fetchSpec": "https://github.com/toxicpsion/cordova-plugin-printer.git",
+    "gitCommittish": null
   },
   "_requiredBy": [
     "#DEV:/",
     "#USER"
   ],
-  "_resolved": "https://registry.npmjs.org/cordova-plugin-printer/-/cordova-plugin-printer-0.8.0.tgz",
-  "_shasum": "9ae2e9e85dc1adfcce9d37a42d273e20b0914d0e",
-  "_spec": "cordova-plugin-printer",
+  "_resolved": "git+https://github.com/toxicpsion/cordova-plugin-printer.git#54f61d806ebbc09115d86f78fab9b071bf9806eb",
+  "_spec": "https://github.com/toxicpsion/cordova-plugin-printer.git",
   "_where": "/home/toxicpsion/Documents/Projects/SiteSafe",
   "author": {
     "name": "Sebastián Katzer"
@@ -39,6 +36,7 @@
       "browser"
     ]
   },
+  "dependencies": {},
   "deprecated": false,
   "description": "Prints HTML documents",
   "engines": [

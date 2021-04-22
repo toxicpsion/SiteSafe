@@ -19,17 +19,25 @@
     "cordova-plugin-file-transfer": {
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
     },
+    "cordova-plugin-network-information": {
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
+    },
     "cordova-plugin-splashscreen": {
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
     },
     "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
     },
-    "cordova-plugin-network-information": {
-      "PACKAGE_NAME": "ca.sixwest.sitesafe"
-    },
     "cordova-plugin-printer": {
       "ANDROID_SUPPORT_V4_VERSION": "28.+",
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
+    },
+    "cordova-plugin-fcm-with-dependecy-updated": {
+      "ANDROID_DEFAULT_NOTIFICATION_ICON": "@mipmap/ic_launcher",
+      "ANDROID_FCM_VERSION": "21.0.0",
+      "ANDROID_FIREBASE_BOM_VERSION": "26.0.0",
+      "ANDROID_GOOGLE_SERVICES_VERSION": "4.3.4",
+      "ANDROID_GRADLE_TOOLS_VERSION": "4.1.0",
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
     }
   },

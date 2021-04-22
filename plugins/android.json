@@ -16,9 +16,6 @@
     "cordova-plugin-file": {
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
     },
-    "cordova-plugin-file-transfer": {
-      "PACKAGE_NAME": "ca.sixwest.sitesafe"
-    },
     "cordova-plugin-network-information": {
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
     },

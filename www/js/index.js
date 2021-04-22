@@ -165,6 +165,7 @@ let sixWestPromiseAPI = {
 			}, 5000);
 
 			doFirstRun = function () {
+				// Check
 				fetch(`${sixWestPromiseAPI.APIServerDefault}/user/firstrun`, {
 					method: "post",
 					headers: {

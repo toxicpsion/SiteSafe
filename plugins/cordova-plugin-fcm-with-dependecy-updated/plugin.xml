@@ -48,9 +48,7 @@
 					<category android:name="android.intent.category.DEFAULT" />
 				</intent-filter>
 			</activity>
-			<service 
-				android:name="com.gae.scaffolder.plugin.MyFirebaseMessagingService"
-				android:stopWithTask="false">
+			<service android:name="com.gae.scaffolder.plugin.MyFirebaseMessagingService" android:stopWithTask="false">
 				<intent-filter>
 					<action android:name="com.google.firebase.MESSAGING_EVENT"/>
 				</intent-filter>
@@ -120,7 +118,7 @@
 		<!-- FIREBASE COCOAPODS-->
 		<podspec>
 			<config>
-                <source url="https://github.com/CocoaPods/Specs.git"/>
+				<source url="https://cdn.cocoapods.org/"/>
 			</config>
 			<pods>
 				<pod name="Firebase/Messaging" spec="$IOS_FIREBASE_MESSAGING_VERSION"/>

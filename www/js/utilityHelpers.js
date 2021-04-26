@@ -35,4 +35,7 @@ let UTIL = {
 		console.log("Waited for ID: ",id)
 		return document.getElementById(id);
 	},
+	cloneObject: function (obj) {
+		return JSON.parse(JSON.stringify(obj))
+	}
 };

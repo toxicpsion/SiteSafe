@@ -36,6 +36,9 @@
       "ANDROID_GOOGLE_SERVICES_VERSION": "4.3.4",
       "ANDROID_GRADLE_TOOLS_VERSION": "4.1.0",
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
+    },
+    "cordova.custom.plugins.exitapp": {
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
     }
   },
   "dependent_plugins": {}

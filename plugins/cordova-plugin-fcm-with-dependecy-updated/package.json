@@ -1,27 +1,24 @@
 {
-  "_from": "cordova-plugin-fcm-with-dependecy-updated",
+  "_from": "git+https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
   "_id": "cordova-plugin-fcm-with-dependecy-updated@7.8.0",
   "_inBundle": false,
-  "_integrity": "sha512-p2pbY1oqQ2UDbaWOWA2z84uMXmdDGYmK2O+mrufj1bZyoFodt7WqrtiB9oDnUuSSinMrdNFrupiWEDMSBSNVeQ==",
+  "_integrity": "",
   "_location": "/cordova-plugin-fcm-with-dependecy-updated",
   "_phantomChildren": {},
   "_requested": {
-    "type": "tag",
-    "registry": true,
-    "raw": "cordova-plugin-fcm-with-dependecy-updated",
-    "name": "cordova-plugin-fcm-with-dependecy-updated",
-    "escapedName": "cordova-plugin-fcm-with-dependecy-updated",
-    "rawSpec": "",
-    "saveSpec": null,
-    "fetchSpec": "latest"
+    "type": "git",
+    "raw": "https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
+    "rawSpec": "https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
+    "saveSpec": "git+https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
+    "fetchSpec": "https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
+    "gitCommittish": null
   },
   "_requiredBy": [
     "#DEV:/",
     "#USER"
   ],
-  "_resolved": "https://registry.npmjs.org/cordova-plugin-fcm-with-dependecy-updated/-/cordova-plugin-fcm-with-dependecy-updated-7.8.0.tgz",
-  "_shasum": "83ff1662adf4f9b0b267c7ed54aca82b1f3bbdc5",
-  "_spec": "cordova-plugin-fcm-with-dependecy-updated",
+  "_resolved": "git+https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git#b3ae15f7739e2e74382e8b03da34bfcbecf8fe23",
+  "_spec": "https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
   "_where": "/home/toxicpsion/Documents/Projects/SiteSafe",
   "author": {
     "name": "André Augusto Tissot"

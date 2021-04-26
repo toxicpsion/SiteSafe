@@ -58,7 +58,15 @@
   "cordova-plugin-fcm-with-dependecy-updated": {
     "source": {
       "type": "registry",
-      "id": "cordova-plugin-fcm-with-dependecy-updated"
+      "id": "https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova.custom.plugins.exitapp": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-exitapp"
     },
     "is_top_level": true,
     "variables": {}

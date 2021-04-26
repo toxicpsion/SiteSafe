@@ -3,7 +3,8 @@ cordova, ons,
 StackTrace, Connection
 CordovaPromiseFS, hex_sha1
 
-modal
+modal,
+FCM
 */
 
 //Included Modules I Use:
@@ -13,7 +14,10 @@ modal
 //signature_pad: MIT Licence - https://github.com/szimek/signature_pad
 
 // eslint-disable-next-line no-unused-vars
-let sixWestPromiseAPI = {
+let rootNavigator;
+let SiteSafeAPI = mod_SiteSafeAPI();
+
+/* let __sixWestPromiseAPI = {
 	APIServerDefault: "http://artisan.6west.ca:16022",
 	pushRemotePage: function pushRemotePage(url) {
 		return new Promise((resolve, reject) => {
@@ -31,234 +35,8 @@ let sixWestPromiseAPI = {
 				});
 		});
 	},
-	sendLog: function sendLog(
-		message,
-		logmodule = "MAIN",
-		host = sixWestPromiseAPI.APIServerDefault
-	) {
-		if (!sixWestPromiseAPI.isConnected) return;
 
-		fetch(host + "/log", {
-			method: "post",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				client: app.thisStartUUID,
-				module: logmodule,
-				message: message,
-			}),
-		})
-			.then((r) => r.text())
-			.then((data) => {
-				console.debug("logserver returned: ", data);
-			});
-	},
-	isConnected: async function isConnected() {
-		console.log("isConnected(): ");
-		let conn = await new Promise((resolve, reject) => {
-			if (navigator.connection.type == Connection.UNKNOWN) resolve(false);
 
-			if (navigator.connection.type == Connection.NONE) {
-				resolve(false);
-			} else if (
-				navigator.connection.type == Connection.WIFI ||
-				navigator.connection.type == Connection.ETHERNET
-			) {
-				sixWestPromiseAPI
-					.pingServer()
-					.then((pingResponse) => resolve(pingResponse))
-					.catch(() => resolve(false));
-			} else if (
-				navigator.connection.type != Connection.NONE &&
-				navigator.connection.type != Connection.UNKNOWN
-			) {
-				if (app.preferences.minimizeDataUse) {
-					resolve(false);
-				} else {
-					sixWestPromiseAPI
-						.pingServer()
-						.then((pingResult) => {
-							resolve(pingResult);
-						})
-						.catch(() => resolve(false));
-				}
-				//
-			} else {
-				resolve(false);
-			}
-		});
-		console.log(conn);
-		return conn;
-	},
-	pingServer: function pingServer(host = sixWestPromiseAPI.APIServerDefault) {
-		// eslint-disable-next-line no-unused-vars
-		return new Promise((resolve, reject) => {
-			let thisRequestTime = parseInt(Date.now() / 1000);
-			let pingTargetTime =
-				(sixWestPromiseAPI.lastPingTime || 0) + app.preferences.pingTimeout;
-
-			if (pingTargetTime - thisRequestTime < 0) {
-				clearTimeout(sixWestPromiseAPI.pinger);
-
-				sixWestPromiseAPI.pinger = setTimeout(
-					sixWestPromiseAPI.pingServer.bind(),
-					(app.preferences.pingTimeout + 5) * 1000
-				); //timeout + 5sec to allow expire
-
-				fetch(host + "/ping", {
-					method: "post",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						u:
-							typeof app.currentUser != typeof undefined
-								? app.currentUser.username
-								: "",
-						p:
-							typeof app.currentUser != typeof undefined
-								? app.currentUser.passhash
-								: "",
-						s: app.thisStartUUID,
-					}),
-				})
-					.then((r) => r.text())
-					.then((data) => {
-						if (data) {
-							sixWestPromiseAPI.lastPingTime = thisRequestTime;
-
-							resolve(true);
-						}
-						resolve(false);
-					})
-					.catch(() => {
-						resolve(false);
-					});
-			} else {
-				console.debug("Ping Still Valid");
-				resolve(true);
-			}
-		});
-	},
-	loadProvisioning: async function (user = false) {
-		if (!user) {
-			if (await app.fs.exists("sixwest_provisioning")) {
-				console.debug("Provisioning data.");
-
-				app.fs.remove("sixwest_provisioning");
-				console.debug("removed");
-				//REMOVEME
-			} else {
-				console.debug("Not Provisioned");
-			}
-			return false;
-		} else {
-			//fetch
-			return false;
-		}
-	},
-	doLogin: function (username, password) {
-		return new Promise((resolve, reject) => {
-			setTimeout(() => {
-				reject({ status: 500, message: "Timed Out." });
-			}, 5000);
-
-			doFirstRun = function () {
-				// Check
-				fetch(`${sixWestPromiseAPI.APIServerDefault}/user/firstrun`, {
-					method: "post",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						username: username,
-					}),
-				})
-					.then((r) => r.json())
-					.then((r) => {
-						r.auth = JSON.parse(r.auth);
-						r.reserved = JSON.parse(r.reserved);
-						return r;
-					})
-					.then((user) => {
-						if (user.reserved.completedFirstRun) {
-							alert("firstrun completed");
-						} else {
-							alert("is firstrun");
-						}
-
-						resolve(user);
-						return;
-					})
-					.catch((e) => {
-						reject();
-					});
-				return;
-			};
-
-			switch (navigator.connection.type) {
-				case Connection.WIFI:
-				case Connection.ETHERNET: {
-					alert("DIRECT CONN");
-					break;
-				}
-				case Connection.CELL:
-				case Connection.CELL_4G:
-				case Connection.CELL_3G:
-				case Connection.CELL_2G: {
-					alert("MOBILE DATA");
-					break;
-				}
-				case Connection.UNKNOWN: {
-					alert("UNKNOWN CONN");
-					break;
-				}
-				default: {
-					alert("DEFAULTCONN")
-				}
-			}
-
-			fetch(`${sixWestPromiseAPI.APIServerDefault}/user/login`, {
-				method: "post",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					username: username,
-					passhash: password.length ? hex_sha1(password) : "",
-				}),
-			})
-				.then((r) => {
-					if (r.status == 202) {
-						doFirstRun();
-						return;
-					} else if (r.status == 200) {
-						return r;
-					} else {
-						reject();
-					}
-				})
-				.then((r) => r.json())
-				.then((data) => {
-					//populate our passhash, as server doesn't send it.
-					data.user.passhash = hex_sha1(password);
-
-					sixWestPromiseAPI.lastPingTime = Date.now() / 1000;
-
-					resolve(data.user);
-				});
-		});
-	},
-	doLogout: function () {
-		app.fs.remove("userProfile").then((e) => {
-			console.debug(e);
-			app.currentUser = undefined;
-			delete app.currentUser;
-
-			location.reload();
-		});
-	},
 	__queryResource: function (resource, params = {}) {
 		return new Promise(function (resolve, reject) {
 			console.debug("queryResource");
@@ -276,14 +54,14 @@ let sixWestPromiseAPI = {
 			}, 5000);
 			sixWestPromiseAPI.isConnected().then((connected) => {
 				if (connected) {
-					fetch(`${sixWestPromiseAPI.APIServerDefault}/user/fetch/${user}`, {
+					fetch(`https://sitesafe.6west.ca/user/fetch/${user}`, {
 						method: "post",
 						headers: {
 							"Content-Type": "application/json",
 						},
 						body: JSON.stringify({
-							u: app.currentUser.username,
-							p: app.currentUser.passhash,
+							username: SiteSafeAPI.user.username,
+							passhash: SiteSafeAPI.user.passhash,
 							userID: user,
 						}),
 					})
@@ -303,14 +81,14 @@ let sixWestPromiseAPI = {
 
 			sixWestPromiseAPI.isConnected().then((connected) => {
 				if (connected) {
-					fetch(`${sixWestPromiseAPI.APIServerDefault}/user/list`, {
+					fetch(`https://sitesafe.6west.ca/user/list`, {
 						method: "post",
 						headers: {
 							"Content-Type": "application/json",
 						},
 						body: JSON.stringify({
-							u: app.currentUser.username,
-							p: app.currentUser.passhash,
+							username: SiteSafeAPI.user.username,
+							passhash: SiteSafeAPI.user.passhash,
 							params: params,
 						}),
 					})
@@ -337,8 +115,8 @@ let sixWestPromiseAPI = {
 							"Content-Type": "application/json",
 						},
 						body: JSON.stringify({
-							u: app.currentUser.username,
-							p: app.currentUser.passhash,
+							u: SiteSafeAPI.user.username,
+							p: SiteSafeAPI.user.passhash,
 							params: params,
 						}),
 					})
@@ -390,8 +168,8 @@ let sixWestPromiseAPI = {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					u: app.currentUser.username,
-					p: app.currentUser.passhash,
+					u: SiteSafeAPI.user.username,
+					p: SiteSafeAPI.user.passhash,
 					resource: resource,
 				}),
 			})
@@ -401,241 +179,8 @@ let sixWestPromiseAPI = {
 				});
 		});
 	},
-	listResource: function (resource, options = {}) {
-		return new Promise(function (resolve, reject) {
-			console.debug("listResource");
-			setTimeout(() => {
-				reject({ status: 500, message: "Timed Out." });
-			}, 5000);
 
-			sixWestPromiseAPI.isConnected().then((connected) => {
-				if (connected) {
-					fetch(`${sixWestPromiseAPI.APIServerDefault}/list/${resource}`, {
-						method: "post",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({
-							u: app.currentUser.username,
-							p: app.currentUser.passhash,
-							options: options,
-						}),
-					})
-						.then((r) => r.json())
-						.then((data) => {
-							app.fs
-								.write(`${resource}_list`, JSON.stringify(data))
-								.then((e) => {
-									resolve(data);
-								});
-						});
-				} else {
-					app.fs.exists(`${resource}_list`).then((f) => {
-						if (f.isFile) {
-							//exists
-							app.fs.read(f).then((data) => {
-								console.debug(`cache hit. ${resource}_list`);
-								resolve(JSON.parse(data));
-							});
-						} else {
-							reject();
-						}
-					});
-				}
-			});
-		});
-	},
 
-	//BEWARE!! getFillableControlFromJSON recurses.
-	getFillableControlFromJSON: function getFillableControlFromJSON(obj_JSON) {
-		addSubItems = () => {
-			thisElement.classList.add("hasSubItems");
-
-			let subControlElement = ons.createElement(`<div></div>`);
-			subControlElement.classList.add("subGroupContainer");
-
-			subControlElement.addEventListener("touchend", function () {
-				console.warn(this);
-				this.classList.add("hasInteracted");
-			});
-
-			obj_JSON.data.forEach((subelement) => {
-				subControlElement.appendChild(
-					sixWestPromiseAPI.getFillableControlFromJSON(subelement)
-				);
-			});
-
-			thisElement.appendChild(subControlElement);
-		};
-
-		let thisElement = ons.createElement(
-			`<div class="printable controlItem"></div>`
-		);
-
-		switch (obj_JSON.type) {
-			// LABEL
-			case 0: {
-				thisElement.appendChild(
-					ons.createElement(
-						`<div class="itemHeader">
-						<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
-						<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
-						</div>`
-					)
-				);
-				break;
-			}
-			//Range Slider
-			case 1: {
-				thisElement.appendChild(
-					ons.createElement(
-						`<div class="itemHeader">
-						<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
-						<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
-						</div>`
-					)
-				);
-
-				let thisControl = ons.createElement(`
-				<div style="text-align:right;">
-					<div style="position: relative; bottom: 0px;" class="thisValue" id="fResp_${obj_JSON.id}">&nbsp;</div>						
-					
-					<ons-range  input-id="ibp_${obj_JSON.id}" value="0" max="5" min="1"></ons-range>	
-						
-					<div style="width: 100%; display: flex; justify-content: space-between; flex-grow: 1;font-size: xx-small;">
-						<div>|</div><div>|</div><div>|</div><div>|</div><div>|</div>
-					</div>
-					<div style="width: 100%; display: flex; justify-content: space-between; flex-grow: 1; font-size: xx-small;">
-						<div>Not Applicable</div><div></div><div></div><div></div><div>Immediate Danger</div>
-					</div>
-				</div>`);
-				thisControl.querySelector("ons-range").addEventListener(
-					"input",
-					(e) => {
-						vals = [
-							"Not Applicable",
-							"Acceptable",
-							"Minor Risk",
-							"Serious Risk",
-							"Immediate Danger",
-						];
-						thisControl.querySelector(".thisValue").innerHTML =
-							vals[e.target.value - 1];
-					},
-					{ passive: true }
-				);
-				thisElement.appendChild(thisControl);
-				break;
-			}
-			//CheckBox
-			case 2: {
-				thisElement.appendChild(
-					ons.createElement(`
-				<div class="formItem_checkbox">
-				<ons-checkbox input-id="fResp_${obj_JSON.id}"></ons-checkbox> 
-				<label for="fResp_${obj_JSON.id}">
-					${obj_JSON.text}
-				</label>
-				</div>`)
-				);
-				break;
-			}
-			//Text Input
-			case 3: {
-				thisElement.appendChild(
-					ons.createElement(`<div class="itemHeader">${obj_JSON.text}</div>`)
-				);
-				thisElement.appendChild(
-					ons.createElement(`	
-					<ons-input style="width: 100%;border: 1px dotted #CCCCCC; 
-							border-radius: .2em; 
-							background-color: #EEEEEE;" 
-				id="o_${obj_JSON.id}" 
-				input-id="fResp_${obj_JSON.id}" 
-				float>
-			</ons-input>`)
-				);
-				break;
-			}
-			//Multiline Text
-			case 4: {
-				thisElement.appendChild(
-					ons.createElement(`<div class="itemHeader">${obj_JSON.text}</div>`)
-				);
-				thisElement.appendChild(
-					ons.createElement(`<textarea id="fResp_${obj_JSON.id}" 
-				style="resize: none; 
-						 height: ${obj_JSON.size ? obj_JSON.size : 70}vh;
-						width: 90vw; 
-				border-radius: .25em"></textarea>
-				`)
-				);
-				break;
-			}
-			case 5: {
-				thisElement.appendChild(
-					ons.createElement(`<img src="${obj_JSON.src}">`)
-				);
-				break;
-			}
-			//Signature
-			case 6: {
-				let s = ons.createElement(`
-				<canvas class="signatureBox"
-				id="fResp_${obj_JSON.id}" 
-				></canvas>`);
-				let signaturePad = new SignaturePad(s);
-
-				// setup pen inking
-				signaturePad.minWidth = 0.1;
-				signaturePad.maxWidth = 1.6;
-				signaturePad.penColor = "blue";
-
-				signaturePad.onEnd = function (e) {
-					e.target.setAttribute("data", JSON.stringify(this.toData()));
-				};
-
-				let controls = ons.createElement(`<div class="controls">
-					</div>`);
-				let addSig = ons.createElement(`<ons-button icon="plus"></ons-button>`);
-				let removeSig = ons.createElement(
-					`<ons-button icon="trash"></ons-button>`
-				);
-				addSig.addEventListener("click", function (e) {
-					signaturePad.off();
-
-					newSig = sixWestPromiseAPI.getFillableControlFromJSON({
-						id: `signature_${
-							document.querySelectorAll(".signatureBox").length
-						}`,
-						type: 6,
-					});
-					thisElement.appendChild(newSig);
-					addSig.remove();
-				});
-
-				removeSig.addEventListener("click", function () {
-					thisElement.remove();
-				});
-				controls.appendChild(addSig);
-				controls.appendChild(removeSig);
-				thisElement.appendChild(controls);
-				thisElement.appendChild(s);
-				break;
-			}
-			default: {
-				return ons.createElement(
-					`<div style="background: #FFAAAA">${obj_JSON.text}</div>`
-				);
-			}
-		}
-
-		if (obj_JSON.data) {
-			addSubItems();
-		}
-
-		return thisElement;
-	},
 	getPrintableControlFromJSON: function getPrintableControlFromJSON(obj_JSON) {
 		//obj_JSON.desc = obj_JSON.desc ? obj_JSON.desc : "";
 		addSubItems = () => {
@@ -759,145 +304,8 @@ let sixWestPromiseAPI = {
 		}
 	},
 };
-
+ */
 let app = {
-	state: {
-		documentList: [],
-		templateList: [],
-		template: [],
-	},
-	preferences: {
-		//DEFAULTS
-		//reset: delete saved prefs on startup
-		debug: true,
-		reset: false,
-		minimizeDataUse: false,
-		pingTimeout: 600,
-		_description: {
-			debug: "Enable Network debugging",
-			reset: "Clear Saved Settings on next start",
-			minimizeDataUse: "Minimize data use.",
-			pingTimeout: "API Check Interval",
-		},
-	},
-	log: function (message, logmodule = "MAIN") {
-		if (app.preferences.debug) {
-			sixWestPromiseAPI.sendLog(message, logmodule);
-		}
-
-		console.log(
-			JSON.stringify({
-				client: app.thisStartUUID,
-				module: logmodule,
-				message: message,
-			})
-		);
-	},
-	loadPreferences: function () {
-		return new Promise((resolve, reject) => {
-			app.fs
-				.exists("preferences")
-				.then((exists) => {
-					if (exists) {
-						console.debug("prefs.exist");
-						app.fs
-							.readJSON("preferences")
-							.then((storedPrefs) => {
-								if (storedPrefs.reset) {
-									app
-										.savePreferences()
-										.then(() => {
-											console.debug("prefs.reset: OK");
-											let removeDir = (path) => {
-												return new Promise((resolve, reject) => {
-													app.fs
-														.list(path, "f")
-														.then((files) => {
-															files.forEach((file) => {
-																console.debug("removing file: ", file);
-																app.fs.remove(file);
-															});
-														})
-														.then(() => {
-															app.fs.list(path, "d").then((dirs) => {
-																dirs.forEach((dir) => {
-																	removeDir(dir);
-																});
-															});
-														})
-														.finally(() => resolve(true))
-														.catch((e) => reject(e));
-												});
-											};
-
-											removeDir("").then(() => {
-												app.log("Removed Filesystem Cache", "LOADPREFS");
-											});
-										})
-
-										.catch(() => {
-											console.debug("prefs.reset: FAILED");
-											reject({
-												msg: "Failed to reset preferences.",
-											});
-										});
-								} else {
-									app.preferences = storedPrefs;
-									resolve(true);
-								}
-							})
-							.catch(() => {
-								console.warn("Failed to parse preferences.\nStoring Defaults.");
-								app
-									.savePreferences()
-									.then(() => {
-										app.loadPreferences().then((e) => {
-											if (e) {
-												console.debug("Reinitialized Preferences");
-												resolve(true);
-											} else {
-												console.debug("Failed to reset malformed preferences");
-												app.fatalError("File Error", "malformed prefs.");
-												reject("Failed to reset malformed preferences");
-											}
-										});
-									})
-									.catch(() => {
-										app.fatalError(
-											"File Error",
-											"Failed to replace malformed preferences"
-										);
-										//location.reload();
-									});
-							});
-					} else {
-						app
-							.savePreferences()
-							.then(() => {
-								console.debug("Preferences Not Found. Wrote Defaults");
-								resolve(true);
-							})
-							.catch((e) => {
-								console.debug(
-									"Preferences Not Found.  Failed To write Defaults"
-								);
-								reject(e);
-							});
-					}
-				})
-				.catch(() => {
-					app.log("FS Error", "loadPreferences");
-				});
-		});
-	},
-	savePreferences: async function () {
-		return app.fs.write("preferences", app.preferences);
-	},
-	fs: CordovaPromiseFS({
-		persistent: true, // or false
-		storageSize: 100 * 1024 * 1024, // storage size in bytes, default 20MB // 0: unlimited?
-		concurrency: 3, // how many concurrent uploads/downloads?
-	}),
 	initialize: () => {
 		if (typeof cordova == typeof undefined) {
 			app.fatalError(`App Startup Failed`, `Cordova seems to be missing.`);
@@ -910,7 +318,7 @@ let app = {
 				var stackTrace = null;
 
 				var sendError = function () {
-					sixWestPromiseAPI.sendLog(logMessage);
+					SiteSafeAPI.log(logMessage);
 					ons.notification.alert(logMessage);
 
 					return;
@@ -946,59 +354,32 @@ let app = {
 		document.querySelector("ons-modal").show();
 	},
 	deviceReady: function deviceReady() {
-		cordova.getAppVersion.getVersionNumber().then((version) => {
-			app.version = version;
-			app.log(`deviceReady (${app.version})`);
-		});
-
-		app.thisStartUUID = hex_sha1(String(Date.now()));
-
 		if (ons.platform.isIPhoneX()) {
 			console.debug("Applying IphoneX css fixes.");
 			document.documentElement.setAttribute("onsflag-iphonex-portrait", "");
 			document.documentElement.setAttribute("onsflag-iphonex-landscape", "");
 		}
 
-		app.rootNavigator = document.getElementById("rootNavigator");
+		rootNavigator = document.getElementById("rootNavigator");
 
-		document.addEventListener("init", app.pageInitHandler, false);
-		document.addEventListener("show", app.pageShowHandler, false);
-
-		app
-			.loadPreferences()
-			.then((e) => {
-				if (e) {
-					console.debug("Loaded Preferences");
-				} else {
-					console.debug("Failed to load Preferences");
-				}
-
-				//Ping Once At start
-				sixWestPromiseAPI
-					.isConnected()
-					.then(() => {})
-					.catch((e) => console.debug(e));
-			})
-			.catch((e) => {
-				app.log("LOADFAIL" + JSON.stringify(e));
-				//debugger;
-			});
-
-		sixWestPromiseAPI.loadProvisioning().then(() => {
-			app.fs.exists("userProfile").then((e) => {
-				if (e) {
-					console.debug("Stored User Profile");
-					app.fs.readJSON("userProfile").then((storedUser) => {
-						app.currentUser = storedUser;
-
-						app.rootNavigator.resetToPage("tpl_tabNavigator");
-					});
-				} else {
-					console.debug("No Stored User Profile");
-					app.rootNavigator.resetToPage("tpl_loginPage");
-				}
-			});
+		cordova.getAppVersion.getVersionNumber().then((version) => {
+			app.version = version;
+			SiteSafeAPI.log(`deviceReady (${app.version})`);
 		});
+
+		SiteSafeAPI.init().then(() => {
+			document.addEventListener("init", app.pageInitHandler, false);
+			document.addEventListener("show", app.pageShowHandler, false);
+			document.addEventListener("hide", app.pageHideHandler, false);
+
+			if (!SiteSafeAPI.isLoggedIn) {
+				rootNavigator.resetToPage("tpl_loginPage");
+			} else {
+				rootNavigator.resetToPage("tpl_tabNavigator");
+			}
+		});
+
+		return;
 	},
 	pageInitHandler: function (event) {
 		console.debug("pageInitHandler stub: " + event.target.id);
@@ -1007,15 +388,15 @@ let app = {
 				let list = document.getElementById("l_preferences");
 				list.innerHTML = "";
 
-				for (let [key, value] of Object.entries(app.preferences)) {
+				for (let [key, value] of Object.entries(SiteSafeAPI.preferences)) {
 					if (key.charAt(0) == "_") break;
 
-					switch (typeof app.preferences[key]) {
+					switch (typeof SiteSafeAPI.preferences[key]) {
 						case "boolean": {
 							let i = ons.createElement(`
 							<ons-list-item>
 								<div class="left">
-								${app.preferences._description[key]}
+								${SiteSafeAPI.preferences._description[key]}
 								</div>
 								<div class="right">
 								<ons-switch ${value == true ? "checked" : ""}></ons-switch>
@@ -1025,7 +406,9 @@ let app = {
 							list.appendChild(i);
 
 							i.addEventListener("change", function () {
-								app.preferences[key] = this.querySelector("ons-switch").checked;
+								SiteSafeAPI.preferences[key] = this.querySelector(
+									"ons-switch"
+								).checked;
 							});
 
 							break;
@@ -1033,7 +416,7 @@ let app = {
 						case "number": {
 							let i = ons.createElement(`
 							<ons-list-item tappable>
-								<ons-row><ons-col>${app.preferences._description[key]}</ons-col><ons-col>
+								<ons-row><ons-col>${SiteSafeAPI.preferences._description[key]}</ons-col><ons-col>
 								<ons-range type="number" min="15" max="3600" step="15" value="${value}"></ons-range>
 								</ons-col>
 								<ons-col class="value">
@@ -1045,14 +428,15 @@ let app = {
 							list.appendChild(i);
 
 							i.addEventListener("input", function () {
-								app.preferences[key] = parseInt(
+								SiteSafeAPI.preferences[key] = parseInt(
 									this.querySelector("ons-range").value
 								);
-								this.querySelector(".value").innerHTML = app.preferences[key];
+								this.querySelector(".value").innerHTML =
+									SiteSafeAPI.preferences[key];
 							});
-							i.addEventListener("change", function () {
+							/* 							i.addEventListener("change", function () {
 								localStorage.setItem("prefs", JSON.stringify(app.preferences));
-							});
+							}); */
 							break;
 						}
 						default: {
@@ -1060,70 +444,31 @@ let app = {
 						}
 					}
 				}
-
-				let i = ons.createElement("<ons-row></ons-row>");
-				i.appendChild(
-					ons.createElement(
-						`<ons-col style="width: 80%" class="center">
-					<ons-button icon="save" id="btn_SaveSettings">
-					&nbsp;&nbsp;Save Settings
-					</ons-button>
-		  		</ons-col>`
-					)
-				);
-
-				list.appendChild(i);
-
-				document
-					.getElementById("btn_SaveSettings")
-					.addEventListener("click", function () {
-						app.savePreferences();
-					});
 				break;
 			}
 			case "p_login": {
 				document
 					.getElementById("btnLogin")
-					.addEventListener("click", function () {
+					.addEventListener("click", async function () {
 						modal.show("Validating Credentials");
 
-						sixWestPromiseAPI
-							.doLogin(
+						if (
+							await SiteSafeAPI.doLogin(
 								document.getElementById("username").value,
 								document.getElementById("password").value
 							)
-							.then((e) => {
-								if (e.isFirstRun) {
-									//e.auth = JSON.parse(e.auth);
-									//e.reserved = JSON.parse(e.reserved);
+						) {
+							history.pushState({}, "Login Success.");
 
-									app.rootNavigator.pushPage("tpl_accountPage", {
-										data: e,
-									});
-									return;
-								} else {
-									history.pushState({}, "Login Success.");
+							rootNavigator.resetToPage("tpl_tabNavigator");
 
-									app.currentUser = e;
-									if (document.getElementById("remember").checked) {
-										app.fs
-											.write("userProfile", app.currentUser)
-											.then(console.debug("Saved User"));
-									}
-									app.rootNavigator.resetToPage("tpl_tabNavigator");
-
-									modal.hide();
-								}
-							})
-							.catch(() => {
-								ons.notification.alert(
-									"Check your credentials and try again.",
-									{
-										title: "Login Failed",
-									}
-								);
-								modal.hide(); //or hangs @ validating credentials
+							modal.hide();
+						} else {
+							ons.notification.alert("Check your credentials and try again.", {
+								title: "Login Failed",
 							});
+							modal.hide(); //or hangs @ validating credentials
+						}
 					});
 				break;
 			}
@@ -1141,14 +486,14 @@ let app = {
 				tb.appendChild(logo);
 
 				let user = ons.createElement(
-					`<div class="toolbarUserName right" id="l_userID">${app.currentUser.name}</div>`
+					`<div class="toolbarUserName right" id="l_userID">${SiteSafeAPI.user.name}</div>`
 				);
 				let userIcon = ons.createElement(`<img class="toolbarUserIcon">`);
 				user.appendChild(userIcon);
 				tb.appendChild(user);
 
 				user.onclick = function () {
-					app.rootNavigator.pushPage("tpl_accountPage", {
+					rootNavigator.pushPage("tpl_accountPage", {
 						data: { mode: "modify" },
 					});
 				};
@@ -1191,7 +536,7 @@ let app = {
 							cBar.innerHTML = "";
 							document.querySelector(".topToolbar").style.visibility =
 								"visible";
-							app.rootNavigator.popPage();
+							rootNavigator.popPage();
 						});
 
 					cBar.style.visibility = "visible";
@@ -1202,19 +547,19 @@ let app = {
 					canvas.innerHTML = `
 			<img class="userImage"><br>
 			<div>
-				<div class="username">${app.currentUser.name}</div>
-				<div class="email">${app.currentUser.username}</div>
+				<div class="username">${SiteSafeAPI.user.name}</div>
+				<div class="email">${SiteSafeAPI.user.username}</div>
 			</div>
 			<hr>
-			<div>${app.currentUser.phone || ""}</div><hr>
-			<div>Notes:<br>${app.currentUser.notes}</div>
+			<div>${SiteSafeAPI.user.phone || ""}</div><hr>
+			<div>Notes:<br>${SiteSafeAPI.user.notes}</div>
 			<div style="padding-top: 2em"> 
 				<ons-button class="logoutButton" icon="times">&nbsp;Logout</ons-button>
 			</div>
 			`;
 					canvas
 						.querySelector(".logoutButton")
-						.addEventListener("click", sixWestPromiseAPI.doLogout);
+						.addEventListener("click", SiteSafeAPI.doLogout);
 				}
 				break;
 			}
@@ -1229,18 +574,16 @@ let app = {
 			case "p_docRender": {
 				var template;
 				console.debug("rendering: ", event.target.data.templateID);
-				sixWestPromiseAPI
-					.fetchResource("templates/" + event.target.data.templateID)
+				SiteSafeAPI.templates
+					.then((t) => t[event.target.data.templateID])
 					.then((a) => {
-						app.log(`Fetched Template ${event.target.data.templateID}`);
+						SiteSafeAPI.log(`Fetched Template ${event.target.data.templateID}`);
 
 						template = a;
 						UTIL.waitForDOMSelector("#p_docRender .renderCanvas").then(
 							(canvas) => {
 								a.data.forEach((item) => {
-									let thisItem = sixWestPromiseAPI.getFillableControlFromJSON(
-										item
-									);
+									let thisItem = SiteSafeAPI.getFillableControlFromJSON(item);
 									thisItem.addEventListener("touchend", function () {
 										this.classList.add("hasInteracted");
 										this.classList.remove("invalidated");
@@ -1315,7 +658,7 @@ let app = {
 
 						//load remote validator from template DBentry
 						if (typeof template.validator == "string") {
-							app.log("Loaded Validator from template.");
+							SiteSafeAPI.log("Loaded Validator from template.");
 							thisValidator = new Function(
 								"response",
 								"templateItem",
@@ -1330,7 +673,6 @@ let app = {
 								return e.id == response.id.substr(6) ? true : false;
 							});
 
-							//debugger;
 							try {
 								if (!thisValidator(response, thisData)) {
 									console.debug("Failed Validation", thisData);
@@ -1339,7 +681,7 @@ let app = {
 									response.classList.add("invalidated");
 								}
 							} catch {
-								app.log(
+								SiteSafeAPI.log(
 									"Validator exception." + JSON.stringify([response, thisData])
 								);
 							}
@@ -1384,37 +726,44 @@ let app = {
 							pendingRequest.data[response.id.substr(6)] = thisResp;
 						});
 
+						pendingRequest.meta = {};
+
 						//subfield to root key mapping for title/subtitle etc.
+
 						if (template.mapping) {
+							console.log(typeof template.mapping);
+							if (typeof template.mapping != "object") {
+								template.mapping = JSON.parse(template.mapping);
+							}
+
 							for (const key in template.mapping) {
-								pendingRequest.data[key] =
+								pendingRequest.meta[key] =
 									pendingRequest.data[template.mapping[key]];
 							}
 						}
 						//TODO: [SIT-5] Improve keymapper scope to .state.CurrentUser and .parentFBDoc
-						pendingRequest.auth = [app.currentUser.username];
-						pendingRequest.author = app.currentUser.username;
+						pendingRequest.id = hex_sha1(Date.now() + SiteSafeAPI.myToken);
+						pendingRequest.auth = [SiteSafeAPI.user.username];
+						pendingRequest.status = 0;
 
-						pendingRequest.authorName = app.currentUser.name;
+						pendingRequest.meta.author = SiteSafeAPI.user.username;
+						pendingRequest.meta.authorName = SiteSafeAPI.user.name;
+						pendingRequest.meta.createdTimeUTC = Date.now();
 
 						pendingRequest.template = event.target.data.templateID;
-
-						pendingRequest.createdTimeUTC = Date.now();
-						pendingRequest.parentDoc = event.target.data.parentID;
-						pendingRequest.documentid = hex_sha1(
-							Date.now() + app.currentUser.username
-						);
+						pendingRequest.rootNode = event.target.data.parentID;
 
 						if (!failedValidation) {
 							//TODO: [SIT-4] Add Multiple Root Template Support
 							//if (event.target.data.templateID < 100) {
 							if (true) {
-								sixWestPromiseAPI
-									.putResource(pendingRequest)
+								SiteSafeAPI.putDocument(pendingRequest)
 									.then((e) => {
-										if (e.status.success) {
-											app.log("Created document:");
+										if (e.status == 202) {
+											SiteSafeAPI.log("Created document:");
+
 											rootNavigator.popPage();
+										} else {
 										}
 									})
 									.catch((e) => {
@@ -1504,7 +853,7 @@ let app = {
 						`<ons-button class="printButton" icon="print"></ons-button>`
 					)
 				);
-				if (app.currentUser.auth.rules.includes("delete")) {
+				if (SiteSafeAPI.user.auth.rules.includes("delete")) {
 					cButtonsR.appendChild(
 						ons.createElement(
 							`<ons-button class="deleteButton" icon="trash"></ons-button>`
@@ -1530,7 +879,7 @@ let app = {
 							.querySelector(".renderCanvas").content;
 
 						cordova.plugins.printer.print(toPrint, { margin: false }, (res) => {
-							app.log("Printing: " + event.target.data);
+							SiteSafeAPI.log("Printing: " + event.target.data);
 
 							cBar.innerHTML = "";
 							cBar.style.visibility = "hidden";
@@ -1553,9 +902,22 @@ let app = {
 			}
 		}
 	},
+	pageHideHandler: function (event) {
+		console.debug("pageShowHandler stub: " + event.target.id);
+		switch (event.target.id) {
+			case "p_settings": {
+				location.reload();
+				break;
+			}
+			default: {
+			}
+		}
+	},
 	updateReferenceList: function updateReferenceList() {
 		let refList = document.getElementById("l_reference");
-		sixWestPromiseAPI.listResource("reference").then((resourceList) => {
+
+		SiteSafeAPI.listResource("reference").then((resourceList) => {
+			return;
 			debugger;
 			let newResources = UTIL.getNewObjectKeys(
 				resourceList,
@@ -1605,69 +967,74 @@ let app = {
 			});
 		});
 	},
-	updateDocumentList: function () {
+	updateDocumentList: async function () {
 		let docList = document.getElementById("documentList");
 		if (!document.getElementById("d_actionStrip")) {
 			let d_actionStrip = ons.createElement(
 				'<div id="d_actionStrip" style=""></div>'
 			);
-			if (app.currentUser.auth.rules.includes("create")) {
+			if (SiteSafeAPI.user.auth.rules.includes("create")) {
 				let b_CreateNew = ons.createElement(
 					'<ons-button icon="plus"><span>Create New</span></ons-button>'
 				);
 				b_CreateNew.addEventListener(
 					"click",
 					function () {
-						let actionbuttons = [];
+						SiteSafeAPI.templates.then((tpl) => {
+							let actionbuttons = [];
 
-						app.state.templateList.forEach((t) => {
-							if (t.id.length <= 4) {
-								actionbuttons.push(
-									JSON.parse(
-										`{ "label": "${t.friendlyName}", "id": "${t.id}" }`
-									)
-								);
+							for (const key in tpl) {
+								if (Object.hasOwnProperty.call(tpl, key)) {
+									const t = tpl[key];
+									if (t.id.length <= 4) {
+										actionbuttons.push(
+											JSON.parse(
+												`{ "label": "${t.meta.title}", "id": "${t.id}" }`
+											)
+										);
+									}
+								}
 							}
+
+							actionbuttons.push(
+								JSON.parse('{ "label": "Cancel", "id": "cancel"}')
+							);
+
+							ons
+								.openActionSheet({
+									id: "b_newdoc",
+									title: `New...`,
+									cancelable: true,
+									buttons: actionbuttons,
+								})
+
+								.then(function (index) {
+									if (index < 0) {
+										// click outside menu (-1) cancels
+										return;
+									}
+									switch (actionbuttons[index].id) {
+										case "cancel":
+											break;
+										default:
+											console.debug("New: ", actionbuttons[index].id);
+											document
+												.getElementById("rootNavigator")
+												.pushPage("tpl_documentRenderer", {
+													data: {
+														templateID: actionbuttons[index].id,
+														parentID: 0,
+													},
+												});
+									}
+								});
 						});
-
-						actionbuttons.push(
-							JSON.parse('{ "label": "Cancel", "id": "cancel"}')
-						);
-
-						ons
-							.openActionSheet({
-								id: "b_newdoc",
-								title: `New...`,
-								cancelable: true,
-								buttons: actionbuttons,
-							})
-
-							.then(function (index) {
-								if (index < 0) {
-									// click outside menu (-1) cancels
-									return;
-								}
-								switch (actionbuttons[index].id) {
-									case "cancel":
-										break;
-									default:
-										console.debug("New: ", actionbuttons[index].id);
-										document
-											.getElementById("rootNavigator")
-											.pushPage("tpl_documentRenderer", {
-												data: {
-													templateID: actionbuttons[index].id,
-													parentID: 0,
-												},
-											});
-								}
-							});
 					},
 					false
 				);
 				d_actionStrip.append(b_CreateNew);
 			}
-			if (app.currentUser.auth.rules.includes("admin")) {
+			if (SiteSafeAPI.user.auth.rules.includes("admin")) {
 				let b_manageDocs = ons.createElement(
 					'<ons-button icon="key"><span>Manage</span></ons-button>'
 				);
@@ -1688,135 +1055,108 @@ let app = {
 			docList.parentNode.append(d_actionStrip);
 		}
 
-		sixWestPromiseAPI.listResource("templates").then((resourceList) => {
-			// Get only toplevel templates
-			//	resourceList = resourceList.filter((item) => item.id.length < 5);
-			app.state.templateList = resourceList;
-
-			resourceList.forEach((e) => {
-				sixWestPromiseAPI
-					.fetchResource("templates/" + e.id)
-					.then(() => {
-						//app.templates = ""
-					})
-					.catch((e) => {
-						console.error(e);
-					});
-			});
-		});
-
-		sixWestPromiseAPI.listResource("documents").then((resourceList) => {
-			console.debug("updateDocuments");
-
-			let newDocuments = UTIL.getNewObjectKeys(
-				resourceList,
-				app.state.documentList
-			);
-
-			let removedDocuments = UTIL.getNewObjectKeys(
-				app.state.documentList,
-				resourceList
-			);
-
-			app.state.documentList = resourceList;
-
-			console.debug("## NEW DOCUMENTS ######");
-			console.table(newDocuments);
-
-			console.debug("## REMOVED DOCUMENTS ##");
-			console.table(removedDocuments);
-
-			if (Object.keys(removedDocuments).length) {
-				for (const key in removedDocuments) {
-					document.getElementById(removedDocuments[key].id).remove();
-					//delete app.state.documents[key]
-				}
-			}
-
-			if (Object.keys(newDocuments).length) {
-				let d = {};
-				d.toplevel = [];
-				d.children = [];
-
-				for (const key in newDocuments) {
-					i = newDocuments[key];
-					if (i.root_node.length <= 4) {
-						d.toplevel.push(i.id);
-					} else {
-						d.children.push(i.id);
+		if (SiteSafeAPI.isLoggedIn) {
+			SiteSafeAPI.changed_documents.then((docs) => {
+				if (Object.keys(docs.removed).length) {
+					for (const key in docs.removed) {
+						document.getElementById(docs.removed[key].id).remove();
+						//delete app.state.documents[key]
 					}
 				}
 
-				d.toplevel.forEach((a) => {
-					sixWestPromiseAPI
-						.fetchResource("documents/" + a)
-						.then((thisDocument) => {
-							thisDocument.createdTimeLocalString = new Date(
-								parseInt(thisDocument.createdTimeUTC)
-							).toDateString();
+				if (Object.keys(docs.added).length) {
+					let localDocs = SiteSafeAPI.documents;
 
-							let thisJob = document
-								.getElementById("documentItem")
-								.cloneNode(true);
+					let d = {};
+					d.toplevel = [];
+					d.children = [];
 
-							console.debug("adding Listitem >>", thisDocument);
-							let thisItem = thisJob.content.querySelector("ons-list-item");
-							thisItem.id = thisDocument.id;
+					for (const key in docs.added) {
+						i = docs.added[key];
+						if (i.rootNode.length <= 4) {
+							d.toplevel.push(i.id);
+						} else {
+							d.children.push(i.id);
+						}
+					}
 
-							let itemControls = thisItem.querySelector(".controlArea");
+					d.toplevel.forEach((toplevelDocID) => {
+						if (document.getElementById(toplevelDocID)) return; //Skip Dupes
 
-							let btn = ons.createElement(
-								`<ons-button class="addButton" icon="fa-plus"></ons-button>`
-							);
+						let tDoc = UTIL.cloneObject(localDocs[toplevelDocID]);
 
-							itemControls.appendChild(btn);
+						tDoc.createdTimeLocalString = new Date(
+							parseInt(tDoc.meta.createdTimeUTC)
+						).toDateString();
 
-							var bClickHandler = function (event) {
-								//	thisItem.toggleAttribute("expandable");
+						let thisJob = document
+							.getElementById("documentItem")
+							.cloneNode(true).content;
 
-								//thisItem.querySelector('.expandable-content').remove()
+						console.debug("adding Listitem >>", tDoc);
 
-								event.stopPropagation();
-								let cl = event.target.classList;
+						let thisListItem = thisJob.querySelector("ons-list-item");
+						thisListItem.id = tDoc.id;
 
-								if (event.target.classList.contains("ons-icon"))
-									//got the icon, find parent
-									cl = event.target.parentNode.classList;
+						let itemControls = thisListItem.querySelector(".controlArea");
 
-								let cmd = "";
-								if (cl.contains("addButton")) cmd = "add";
-								if (cl.contains("printButton")) cmd = "print";
-								if (cl.contains("assignButton")) cmd = "assign";
-								if (cl.contains("deleteButton")) cmd = "delete";
+						let btn = ons.createElement(
+							`<ons-button class="addButton" icon="fa-plus"></ons-button>`
+						);
 
-								if (cl.contains("altState")) {
-									cmd = "alt_" + cmd;
-								}
-								thisItem.querySelectorAll(".jobControls").forEach((c) => {
-									c.visible = false;
-									c.remove();
-								});
+						itemControls.appendChild(btn);
 
-								document.querySelectorAll(".altState").forEach((c) => {
-									c.classList.remove("altState");
-									c.setAttribute("icon", "plus");
-								});
+						var bClickHandler = function (event) {
+							//	thisItem.toggleAttribute("expandable");
 
-								switch (cmd) {
-									case "add": {
-										//add doc to ${key}
+							//thisItem.querySelector('.expandable-content').remove()
 
+							event.stopPropagation();
+							let thisListItemClassList = event.target.classList;
+
+							if (event.target.classList.contains("ons-icon"))
+								//got the icon, find parent
+								thisListItemClassList = event.target.parentNode.classList;
+
+							let cmd = "";
+							if (thisListItemClassList.contains("addButton")) cmd = "add";
+							if (thisListItemClassList.contains("printButton")) cmd = "print";
+							if (thisListItemClassList.contains("assignButton"))
+								cmd = "assign";
+							if (thisListItemClassList.contains("deleteButton"))
+								cmd = "delete";
+
+							if (thisListItemClassList.contains("altState")) {
+								cmd = "alt_" + cmd;
+							}
+							thisListItem.querySelectorAll(".jobControls").forEach((c) => {
+								c.visible = false;
+								c.remove();
+							});
+
+							document.querySelectorAll(".altState").forEach((c) => {
+								c.classList.remove("altState");
+								c.setAttribute("icon", "plus");
+							});
+
+							switch (cmd) {
+								case "add": {
+									//add doc to ${key}
+									SiteSafeAPI.templates.then((tpl) => {
 										let actionbuttons = [];
 
-										app.state.templateList.forEach((t) => {
-											if (t.id.length > 4) {
-												actionbuttons.push(
-													JSON.parse(
-														`{ "label": "${t.friendlyName}", "id": "${t.id}" }`
-													)
-												);
+										for (const k in tpl) {
+											if (Object.hasOwnProperty.call(tpl, k)) {
+												const t = tpl[k];
+												if (t.id.length > 4) {
+													actionbuttons.push(
+														JSON.parse(
+															`{ "label": "${t.meta.title}", "id": "${t.id}" }`
+														)
+													);
+												}
 											}
-										});
+										}
 
 										actionbuttons.push(
 											JSON.parse('{ "label": "Cancel", "id": "cancel"}')
@@ -1825,7 +1165,9 @@ let app = {
 										ons
 											.openActionSheet({
 												id: "b_newdoc",
-												title: `${thisDocument.data.title}: New...`,
+												title: `${
+													localDocs[thisListItem.id].meta.title
+												}: New...`,
 												cancelable: true,
 												buttons: actionbuttons,
 											})
@@ -1842,137 +1184,141 @@ let app = {
 														console.debug(
 															actionbuttons[index].id +
 																" for " +
-																thisDocument.id
+																thisListItem.id
 														);
+
 														document
 															.getElementById("rootNavigator")
 															.pushPage("tpl_documentRenderer", {
 																data: {
 																	templateID: actionbuttons[index].id,
-																	parentID: thisDocument.id,
+																	parentID: thisListItem.id,
 																},
 															});
 												}
 											});
-										break;
-									}
-									case "assign": {
-										app.assignDocument(thisDocument);
-										break;
-									}
-								}
-							};
-
-							btn.addEventListener("click", bClickHandler.bind());
-
-							btn.addEventListener("hold", function (ev) {
-								//ons.notification.alert(JSON.stringify(app.currentUser));
-
-								btn.classList.toggle("altState");
-								if (
-									btn.classList.contains("altState") &&
-									!thisItem.querySelector(".jobControls")
-								) {
-									let controls = ons.createElement(
-										`<div class="jobControls"></div>`
-									);
-									//ADD TOPLEVEL DOC CONTROLS
-									if (app.currentUser.auth.rules.includes("delete")) {
-										let btnAssign = ons.createElement(
-											`<ons-button class="deleteButton" icon="fa-trash"></ons-button>`
-										);
-										btnAssign.addEventListener("click", bClickHandler.bind());
-										controls.appendChild(btnAssign);
-									}
-
-									if (app.currentUser.auth.rules.includes("assign")) {
-										let btnAssign = ons.createElement(
-											`<ons-button class="assignButton" icon="fa-user-plus"></ons-button>`
-										);
-										btnAssign.addEventListener("click", bClickHandler.bind());
-										controls.appendChild(btnAssign);
-									}
-
-									thisItem.querySelector(".right").insertBefore(controls, btn);
-
-									window.addEventListener("click", () => {
-										document.querySelectorAll(".jobControls").forEach((c) => {
-											c.visible = false;
-											c.remove();
-										});
-										document.querySelectorAll(".altState").forEach((c) => {
-											c.classList.remove("altState");
-											c.setAttribute("icon", "plus");
-										});
 									});
+									break;
 								}
-							});
-							//Remove Icon -- For Now
+								case "assign": {
+									app.assignDocument(SiteSafeAPI.documents[thisListItem.id]);
+									break;
+								}
+							}
+						};
 
-							//thisJob.content
-							//	.querySelector(".list-item__thumbnail")
-							//	.parentNode.remove();
+						btn.addEventListener("click", bClickHandler.bind());
 
-							thisJob.content.querySelector(".list-item__thumbnail").src =
-								"images/list_icon.png";
+						btn.addEventListener("hold", function (ev) {
+							//ons.notification.alert(JSON.stringify(SiteSafeAPI.user));
 
-							thisJob.content.querySelector(".list-item__title").innerHTML =
-								thisDocument.data.title;
-
-							thisJob.content.querySelector(".list-item__subtitle").innerHTML =
-								thisDocument.data.subtitle;
-
-							docList.appendChild(thisJob.content);
-						})
-						.catch((e) => console.error(e));
-				});
-
-				d.children.forEach((a) => {
-					sixWestPromiseAPI
-						.fetchResource("documents/" + a)
-						.then((thisDocument) => {
-							thisDocument.createdTimeLocalString = new Date(
-								parseInt(thisDocument.createdTimeUTC)
-							).toDateString();
-
-							UTIL.waitForDOMId(thisDocument.root_node).then((parentNode) => {
-								let thisSubListItem = document
-									.getElementById("subdocumentItem")
-									.cloneNode(true);
-								let thisItem = thisSubListItem.content.querySelector(
-									"ons-list-item"
+							btn.classList.toggle("altState");
+							if (
+								btn.classList.contains("altState") &&
+								!thisListItem.querySelector(".jobControls")
+							) {
+								let controls = ons.createElement(
+									`<div class="jobControls"></div>`
 								);
+								//ADD TOPLEVEL DOC CONTROLS
+								if (SiteSafeAPI.user.auth.rules.includes("delete")) {
+									let btnAssign = ons.createElement(
+										`<ons-button class="deleteButton" icon="fa-trash"></ons-button>`
+									);
+									btnAssign.addEventListener("click", bClickHandler.bind());
+									controls.appendChild(btnAssign);
+								}
 
-								thisItem.id = thisDocument.id;
-								//debugger;
-								t = app.state.templateList.find(
-									(i) => i.id == thisDocument.template
-								);
+								if (SiteSafeAPI.user.auth.rules.includes("assign")) {
+									let btnAssign = ons.createElement(
+										`<ons-button class="assignButton" icon="fa-user-plus"></ons-button>`
+									);
+									btnAssign.addEventListener("click", bClickHandler.bind());
+									controls.appendChild(btnAssign);
+								}
 
-								thisItem.querySelector(".list-item__title").innerHTML =
-									t.friendlyName;
+								thisListItem
+									.querySelector(".right")
+									.insertBefore(controls, btn);
 
-								thisItem.querySelector(".list-item__subtitle").innerHTML =
-									thisDocument.createdTimeLocalString;
+								window.addEventListener("click", () => {
+									document.querySelectorAll(".jobControls").forEach((c) => {
+										c.visible = false;
+										c.remove();
+									});
+									document.querySelectorAll(".altState").forEach((c) => {
+										c.classList.remove("altState");
+										c.setAttribute("icon", "plus");
+									});
+								});
+							}
+						});
+						//Remove Icon -- For Now
 
-								//	thisSubListItem.content.querySelector(".list-item__thumbnail").src =
-								//		"images/list_icon.png";
-								//thisItem.animation = "fadein 1s ease-in-out;"
+						//thisJob.content
+						//	.querySelector(".list-item__thumbnail")
+						//	.parentNode.remove();
 
-								var gestureD = ons.GestureDetector(thisItem);
+						thisJob.querySelector(".list-item__thumbnail").src =
+							"images/list_icon.png";
 
-								gestureD.on("hold click", function (ev) {
-									ev.stopPropagation();
-									switch (ev.type) {
-										case "click": {
-											sixWestPromiseAPI
-												.fetchResource("templates/" + thisDocument.template)
-												.then((e) => console.warn(e, thisDocument))
+						thisJob.querySelector(".list-item__title").innerHTML =
+							tDoc.meta.title;
 
-												//debugger;
+						thisJob.querySelector(".list-item__subtitle").innerHTML =
+							`${tDoc.meta.subtitle}`;
 
-												//	app.notify("CLICK: <br>" + this.id);
-												/* 									FBAbstract.getDocument(this.id)
+						docList.appendChild(thisJob);
+					});
+
+					d.children.forEach((thisChildDocID) => {
+						if (document.getElementById(thisChildDocID)) return; //Skip Dupes
+
+						let tDoc = UTIL.cloneObject(localDocs[thisChildDocID]);
+
+						tDoc.createdTimeLocalString = new Date(
+							parseInt(tDoc.meta.createdTimeUTC)
+						).toDateString();
+
+						UTIL.waitForDOMId(tDoc.rootNode).then((pNode) => {
+							let thisSubListItem = document
+								.getElementById("subdocumentItem")
+								.cloneNode(true).content;
+
+							let thisItem = thisSubListItem.querySelector("ons-list-item");
+
+							thisItem.id = tDoc.id;
+
+							SiteSafeAPI.templates
+								.then((tpl) => {
+									t = tpl[tDoc.template];
+
+									thisItem.querySelector(".list-item__title").innerHTML = tDoc
+										.meta.title
+										? `${t.meta.title}: ${tDoc.meta.title}`
+										: t.meta.title;
+
+									thisItem.querySelector(".list-item__subtitle").innerHTML =
+										`${tDoc.meta.authorName}: ${tDoc.createdTimeLocalString}`;
+
+									//	thisSubListItem.content.querySelector(".list-item__thumbnail").src =
+									//		"images/list_icon.png";
+									//thisItem.animation = "fadein 1s ease-in-out;"
+
+									var gestureD = ons.GestureDetector(thisItem);
+
+									gestureD.on("hold click", function (ev) {
+										ev.stopPropagation();
+										switch (ev.type) {
+											case "click": {
+												sixWestPromiseAPI
+													.fetchResource("templates/" + thisDocument.template)
+													.then((e) => console.warn(e, thisDocument))
+
+													//;
+
+													//	app.notify("CLICK: <br>" + this.id);
+													/* 									FBAbstract.getDocument(this.id)
 												.then((thisDocument) => {
 													FBAbstract.getTemplate(thisDocument.template).then(
 														(t) => {
@@ -2007,58 +1353,63 @@ let app = {
 												})
 												.catch((e) => app.notify(e));
 											/// Display DOC ${this.id} */
-												.catch((e) => {
-													console.error(e);
+													.catch((e) => {
+														console.error(e);
+													});
+												break;
+											}
+											case "hold": {
+												console.log("hold");
+												break;
+											}
+											default: {
+												SiteSafeAPI.log(
+													"UnHandled Event: " + ev.type + " : " + this.id
+												);
+											}
+										}
+									});
+
+									thisItem.addEventListener("click", (e) =>
+										//VIEW
+										{
+											sixWestPromiseAPI
+												.fetchUser(`${thisDocument.author}`)
+												.then((t) => {
+													thisDocument.authorName = t.name;
+													sixWestPromiseAPI
+														.fetchResource(
+															`/templates/${thisDocument.template}`
+														)
+														.then((t) => {
+															thisDocument.templateData = t;
+
+															sixWestPromiseAPI
+																.fetchResource(
+																	`/documents/${thisDocument.root_node}`
+																)
+																.then((p) => {
+																	thisDocument.parentNode = p;
+																	rootNavigator.pushPage("tpl_docView", {
+																		data: thisDocument,
+																	});
+																})
+																.catch((e) => SiteSafeAPI.log(e));
+														})
+														.catch((e) => console.error(e));
 												});
-											break;
 										}
-										case "hold": {
-											console.log("hold");
-											break;
-										}
-										default: {
-											app.log("UnHandled Event: " + ev.type + " : " + this.id);
-										}
-									}
-								});
-
-								thisItem.addEventListener("click", (e) =>
-									//VIEW
-									{
-										sixWestPromiseAPI
-											.fetchUser(`${thisDocument.author}`)
-											.then((t) => {
-												thisDocument.authorName = t.name;
-												sixWestPromiseAPI
-													.fetchResource(`/templates/${thisDocument.template}`)
-													.then((t) => {
-														thisDocument.templateData = t;
-
-														sixWestPromiseAPI
-															.fetchResource(
-																`/documents/${thisDocument.root_node}`
-															)
-															.then((p) => {
-																thisDocument.parent = p;
-																rootNavigator.pushPage("tpl_docView", {
-																	data: thisDocument,
-																});
-															})
-															.catch((e) => app.log(e));
-													})
-													.catch((e) => console.error(e));
-											});
-									}
-								);
-
-								parentNode.querySelector(".subDocList").appendChild(thisItem);
-							});
-						})
-
-						.catch((e) => console.error(e));
-				});
-			}
-		});
+									);
+									pNode.querySelector(".subDocList").appendChild(thisItem);
+								})
+								.catch();
+						});
+					});
+				}
+			});
+		} else {
+			console.log("NOTLOGGED");
+		}
 	},
 	renderDocument: function (thisDoc) {
 		let cv = ons.createElement(`<div class="printableDocument"></div>`);
@@ -2070,8 +1421,8 @@ let app = {
 									<div class="pageCreateDate">${thisDoc.createdTimeLocalString}</div>
 								</div>
 								<div class="subtitleBlock">
-								<div class="pageTitle">${thisDoc.parent.data.title}</div> 
-								<div class="pageSubTitle">${thisDoc.parent.data.subtitle}</div>
+								<div class="pageTitle">${thisDoc.parentNode.data.title}</div> 
+								<div class="pageSubTitle">${thisDoc.parentNode.data.subtitle}</div>
 								</div>
 								<div class="pageAuthor">Completed by: ${thisDoc.authorName}</div>
 								`;
@@ -2094,6 +1445,7 @@ let app = {
 	},
 	assignDocument: function (thisDoc) {
 		//Remove old List if exists
+		debugger;
 		var dialog = document.getElementById("my-alert-dialog");
 		if (dialog) {
 			dialog.remove();
@@ -2121,7 +1473,7 @@ let app = {
 			`<ons-list modifier="inset" class="assignUserList"></ons-list>`
 		);
 
-		sixWestPromiseAPI.listUsers().then((users) => {
+		SiteSafeAPI.listUsers().then((users) => {
 			debugger;
 			users.forEach((user) => {
 				let row = document.getElementById("genericListItem").cloneNode(true);
@@ -2161,24 +1513,26 @@ let app = {
 					);
 				});
 
-				console.log(updateRequest.assigned.join(" "));
-				//TODO
-			});
-			/* 		window.FirebasePlugin.updateDocumentInFirestoreCollection(
-						docID,
-						updateRequest,
-						"documents",
-						() => {
-							app.notify("Updated Successfully");
+				let newDoc = UTIL.cloneObject(thisDoc);
+				newDoc.auth = updateRequest.assigned.join(" ");
+
+				SiteSafeAPI.putDocument(newDoc)
+					.then((e) => {
+						if (e.status == 202) {
+							SiteSafeAPI.log("Updated document:");
+							//putDocument removes from cache, so remove list item
+							document.getElementById(newDoc.id).remove();
+							//and then update.
+							app.updateDocumentList();
+
 							dialog.hide();
-						},
-						(e) => {
-							app.notify("Updated Failed");
-							dialog.hide();
-							console.error(e);
+						} else {
 						}
-					); */
-			//DocID
+					})
+					.catch((e) => {
+						alert("put failed");
+					});
+			});
 		});
 
 		dialog.show();

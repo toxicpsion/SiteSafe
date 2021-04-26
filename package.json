@@ -24,7 +24,14 @@
             "cordova-plugin-printer": {
                 "ANDROID_SUPPORT_V4_VERSION": "28.+"
             },
-            "cordova-plugin-fcm-with-dependecy-updated": {}
+            "cordova-plugin-fcm-with-dependecy-updated": {
+                "ANDROID_DEFAULT_NOTIFICATION_ICON": "@mipmap/ic_launcher",
+                "ANDROID_FCM_VERSION": "21.0.0",
+                "ANDROID_FIREBASE_BOM_VERSION": "26.0.0",
+                "ANDROID_GOOGLE_SERVICES_VERSION": "4.3.4",
+                "ANDROID_GRADLE_TOOLS_VERSION": "4.1.0"
+            },
+            "cordova.custom.plugins.exitapp": {}
         },
         "platforms": [
             "android"
@@ -38,6 +45,8 @@
         "browser-sync": "^2.26.7",
         "cordova": "^10.0.0",
         "cordova-android": "^9.1.0",
+        "cordova-plugin-exitapp": "^1.0.0",
+        "cordova-plugin-fcm-with-dependecy-updated": "git+https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
         "cordova-plugin-printer": "git+https://github.com/toxicpsion/cordova-plugin-printer.git"
     }
 }

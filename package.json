@@ -49,6 +49,9 @@
         "cordova-plugin-exitapp": "^1.0.0",
         "cordova-plugin-fcm-with-dependecy-updated": "git+https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
         "cordova-plugin-keyboard": "^1.2.0",
-        "cordova-plugin-printer": "git+https://github.com/toxicpsion/cordova-plugin-printer.git"
+        "cordova-plugin-printer": "git+https://github.com/toxicpsion/cordova-plugin-printer.git",
+				"xmldom": ">=0.5.0",
+				"lodash": ">=4.17.19",
+				"systeminformation": ">=5.6.4"
     }
 }

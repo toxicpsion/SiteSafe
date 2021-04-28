@@ -196,7 +196,7 @@ const mod_SiteSafeAPI = () => {
 	}
 	function doLogin(username, password) {
 		return new Promise((resolve, reject) => {
-			setTimeout(() => {
+			let t = setTimeout(() => {
 				resolve(false);
 			}, 5000);
 
@@ -211,32 +211,44 @@ const mod_SiteSafeAPI = () => {
 				}),
 			})
 				.then((r) => {
-					if (r.status == 202) {
-						doFirstRun();
-						return;
-					} else if (r.status == 200) {
+					if (r.status == 201 || r.status == 200) {
 						return r;
 					} else {
 						resolve(false);
-						return;
 					}
 				})
 				.then((r) => r.json())
 				.then((data) => {
-					//populate our passhash, as server doesn't send it.
-					data.passhash = hex_sha1(password);
-					data.auth = JSON.parse(data.auth);
-					data.reserved = JSON.parse(data.reserved);
+					if (!data.reserved.completedFirstRun) {
+						clearTimeout(t);
 
-					fs.write("userProfile", data)
-						.then(console.debug("Saved User"))
-						.catch((e) => console.warn("Error Fetching User"));
+						localState.user = data;
+						
+						app
+						.dialogFirstRun(data)
+						.then((e) => {
+							alert("then");
+							console.log(e);
+						})
+						.catch((e) => {
+							resolve(e)
+						});
+					} else {
+						//populate our passhash, as server doesn't send it.
+						data.passhash = hex_sha1(password);
+						//data.auth = JSON.parse(data.auth);
+						//data.reserved = JSON.parse(data.reserved);
 
-					localState.user = data;
+						fs.write("userProfile", data)
+							.then(console.debug("Saved User"))
+							.catch((e) => console.warn("Error Fetching User"));
 
-					pingServer();
+						localState.user = data;
 
-					resolve(true);
+						pingServer();
+
+						resolve(true);
+					}
 				})
 				.catch((e) => resolve(false));
 		});
@@ -343,6 +355,7 @@ const mod_SiteSafeAPI = () => {
 			reject();
 		});
 	}
+
 	function getFillableControlFromJSON(obj_JSON) {
 		addSubItems = () => {
 			thisElement.classList.add("hasSubItems");
@@ -629,6 +642,7 @@ const mod_SiteSafeAPI = () => {
 				}
 			})();
 		},
+		APIServerDefault,
 		getFillableControlFromJSON,
 		doLogin,
 		doLogout,

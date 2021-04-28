@@ -18,23 +18,9 @@ let rootNavigator;
 let SiteSafeAPI = mod_SiteSafeAPI();
 
 /* let __sixWestPromiseAPI = {
-	APIServerDefault: "http://artisan.6west.ca:16022",
-	pushRemotePage: function pushRemotePage(url) {
-		return new Promise((resolve, reject) => {
-			setTimeout(() => {
-				reject({ status: 500, message: "Timed Out." });
-			}, 5000);
 
-			app.rootNavigator
-				.pushPage(url, { timeout: 2000 })
-				.then((e) => {
-					resolve(e);
-				})
-				.catch((e) => {
-					reject(e);
-				});
-		});
-	},
+	APIServerDefault: "http://artisan.6west.ca:16022",
+
 
 
 	__queryResource: function (resource, params = {}) {
@@ -305,7 +291,58 @@ let SiteSafeAPI = mod_SiteSafeAPI();
 	},
 };
  */
+
+function unifiedFetch(path) {
+	function fetchLocal(url) {
+		return new Promise(function (resolve, reject) {
+			var xhr = new XMLHttpRequest();
+			xhr.onload = function () {
+				resolve(new Response(xhr.responseText, { status: xhr.status }));
+			};
+			xhr.onerror = function () {
+				reject(new TypeError("Local request failed"));
+			};
+			xhr.open("GET", url);
+			xhr.send(null);
+		});
+	}
+
+	switch (String(path).substr(0, 8)) {
+		case "[ASSET]/": {
+			path = String(path).substr(8);
+			path = `${SiteSafeAPI.APIServerDefault}/${userdata.provisioning.provider}/${path}`;
+		}
+		case "https://": {
+			return fetch(path);
+			break;
+		}
+		case "[LOCAL]/": {
+			path = String(path).substr(8);
+			return fetchLocal(cordova.file.applicationDirectory + "www/" + path);
+			break;
+		}
+		default:
+			return;
+	}
+}
 let app = {
+	pushRemotePage: function pushRemotePage(url) {
+		return new Promise((resolve, reject) => {
+			setTimeout(() => {
+				reject({ status: 500, message: "Timed Out." });
+			}, 5000);
+
+			rootNavigator
+				.pushPage(url, { timeout: 2000 })
+				.then((e) => {
+					resolve(e);
+				})
+				.catch((e) => {
+					reject(e);
+				});
+		});
+	},
+
 	initialize: () => {
 		if (typeof cordova == typeof undefined) {
 			app.fatalError(`App Startup Failed`, `Cordova seems to be missing.`);
@@ -372,6 +409,33 @@ let app = {
 			document.addEventListener("show", app.pageShowHandler, false);
 			document.addEventListener("hide", app.pageHideHandler, false);
 
+			/////temp
+			if (false) {
+				app
+					.dialogFirstRun({
+						auth: { rules: "" },
+						name: "",
+						notes: "",
+						phone: "",
+						provisioning: {
+							assets: "{}",
+							provider: "TPI",
+							providerName: null,
+							username: "test1@6west.ca",
+						},
+
+						reserved: {},
+						session: "",
+						username: "test1@6west.ca",
+					})
+					.then((e) => {
+						alert("then");
+						console.log(e);
+						//modal.hide();
+					})
+					.catch((e) => {});
+				return;
+			}
 			if (!SiteSafeAPI.isLoggedIn) {
 				rootNavigator.resetToPage("tpl_loginPage");
 			} else {
@@ -452,22 +516,32 @@ let app = {
 					.addEventListener("click", async function () {
 						modal.show("Validating Credentials");
 
-						if (
+						switch (
 							await SiteSafeAPI.doLogin(
 								document.getElementById("username").value,
 								document.getElementById("password").value
 							)
 						) {
-							history.pushState({}, "Login Success.");
+							case true: {
+								history.pushState({}, "Login Success.");
 
-							rootNavigator.resetToPage("tpl_tabNavigator");
+								rootNavigator.resetToPage("tpl_tabNavigator");
 
-							modal.hide();
-						} else {
-							ons.notification.alert("Check your credentials and try again.", {
-								title: "Login Failed",
-							});
-							modal.hide(); //or hangs @ validating credentials
+								modal.hide();
+
+								break;
+							}
+							case false: {
+								ons.notification.alert(
+									"Check your credentials and try again.",
+									{
+										title: "Login Failed",
+									}
+								);
+							}
+							default: {
+								modal.hide(); //or hangs @ validating credentials
+							}
 						}
 					});
 				break;
@@ -969,10 +1043,11 @@ let app = {
 	},
 	updateDocumentList: async function () {
 		let docList = document.getElementById("documentList");
+
+		//Bottom Create/Manage Action Bar
 		if (!document.getElementById("d_actionStrip")) {
-			let d_actionStrip = ons.createElement(
-				'<div id="d_actionStrip" style=""></div>'
-			);
+			let d_actionStrip = ons.createElement('<div id="d_actionStrip"></div>');
+
 			if (SiteSafeAPI.user.auth.rules.includes("create")) {
 				let b_CreateNew = ons.createElement(
 					'<ons-button icon="plus"><span>Create New</span></ons-button>'
@@ -1034,6 +1109,7 @@ let app = {
 				);
 				d_actionStrip.append(b_CreateNew);
 			}
+
 			if (SiteSafeAPI.user.auth.rules.includes("admin")) {
 				let b_manageDocs = ons.createElement(
 					'<ons-button icon="key"><span>Manage</span></ons-button>'
@@ -1041,8 +1117,8 @@ let app = {
 				b_manageDocs.addEventListener(
 					"click",
 					() => {
-						sixWestPromiseAPI
-							.pushRemotePage("https://sitesafe.6west.ca/admin/manager.html")
+						app
+							.pushRemotePage("https://sitesafe.6west.ca/user/debuglist")
 							.catch((e) => {
 								alert("Resource Unavailable");
 							});
@@ -1265,8 +1341,9 @@ let app = {
 						thisJob.querySelector(".list-item__title").innerHTML =
 							tDoc.meta.title;
 
-						thisJob.querySelector(".list-item__subtitle").innerHTML =
-							`${tDoc.meta.subtitle}`;
+						thisJob.querySelector(
+							".list-item__subtitle"
+						).innerHTML = `${tDoc.meta.subtitle}`;
 
 						docList.appendChild(thisJob);
 					});
@@ -1298,8 +1375,9 @@ let app = {
 										? `${t.meta.title}: ${tDoc.meta.title}`
 										: t.meta.title;
 
-									thisItem.querySelector(".list-item__subtitle").innerHTML =
-										`${tDoc.meta.authorName}: ${tDoc.createdTimeLocalString}`;
+									thisItem.querySelector(
+										".list-item__subtitle"
+									).innerHTML = `${tDoc.meta.authorName}: ${tDoc.createdTimeLocalString}`;
 
 									//	thisSubListItem.content.querySelector(".list-item__thumbnail").src =
 									//		"images/list_icon.png";
@@ -1509,7 +1587,7 @@ let app = {
 
 				userTable.querySelectorAll(".userIsSelected").forEach((u) => {
 					updateRequest.assigned.push(
-						u.querySelector(".list-item__subtitle").innerText
+						u.querySelector(".list-item__subtitle").innerText //is userID.
 					);
 				});
 
@@ -1536,6 +1614,167 @@ let app = {
 		});
 
 		dialog.show();
+	},
+	dialogFirstRun: function (userdata) {
+		return new Promise(function (resolve, reject) {
+			Keyboard.hide();
+
+			var dialog = document.getElementById("my-alert-dialog");
+			if (dialog) {
+				dialog.remove();
+			}
+
+			dialog = ons.createElement(
+				`<ons-alert-dialog id="my-alert-dialog">
+								<div class="alert-dialog-title">Welcome to SiteSafe!</div>
+								<div id="myDialogContent" class="alert-dialog-content">
+								</div>
+								<div class="alert-dialog-footer">
+								<ons-alert-dialog-button class="cancelButton">Cancel</ons-alert-dialog-button>
+								<ons-alert-dialog-button class="nextButton">Next</ons-alert-dialog-button>
+
+									<ons-alert-dialog-button class="prevButton">Previous</ons-alert-dialog-button>
+									
+								</div>
+							</ons-alert-dialog>`,
+				{ append: true }
+			);
+
+			document.querySelector(".alert-dialog").style.width = "90vw";
+			document.getElementById("myDialogContent").style.height = "70vh";
+			dialog.show();
+
+			let nextPageClick = function (p, i, e) {
+				dialogLoadPage(p, i);
+			};
+
+			let prevPageClick = function (p, i, e) {
+				dialogLoadPage(p, i);
+			};
+
+			let dialogLoadPage = function (page, index) {
+				unifiedFetch(page)
+					.then((d) => d.text())
+
+					.then((d) => {
+						for (const k in SiteSafeAPI.user) {
+							const element = SiteSafeAPI.user[k];
+							if (typeof element == "string") {
+								dt = d.replace(`%${k}%`, `${element}`);
+								d = dt;
+							}
+
+							if (typeof element == "object") {
+								for (const k2 in element) {
+									const subelement = element[k2];
+									dt = d.replace(`%${k}.${k2}%`, `${subelement}`);
+									d = dt;
+								}
+							}
+						}
+						return d;
+					})
+					.then((d) => {
+						d = `<div class="forceScrollBar" style="
+						">${d}</div>`;
+						return d;
+					})
+					.then((d) => {
+						loadedContent = ons.createElement(d);
+
+						try {
+							let dTitle = loadedContent.querySelector(".dialogTitle")
+								.innerHTML;
+							document.querySelector(".alert-dialog-title").innerHTML = dTitle;
+						} catch {}
+
+						dContent = document.getElementById("myDialogContent");
+						dContent.style.border = "1px solid lightgrey";
+						dContent.style.borderRadius = "10px";
+
+						dContent.style.margin = "10px";
+						dContent.innerHTML = "";
+
+						dContent.appendChild(loadedContent);
+
+						if (
+							index >=
+							SiteSafeAPI.user.provisioning.providerData.firstRun.length
+						) {
+							document
+								.querySelector(".alert-dialog-footer .nextButton")
+								.classList.add("isdisabled");
+						} else {
+							document
+								.querySelector(".alert-dialog-footer .nextButton")
+								.classList.remove("isdisabled");
+
+							document
+								.querySelector(".alert-dialog-footer .nextButton")
+								.addEventListener(
+									"click",
+									nextPageClick.bind(
+										e,
+										`${SiteSafeAPI.APIServerDefault}/${SiteSafeAPI.user.provisioning.provider}/${SiteSafeAPI.user.provisioning.providerData.firstRun[index]}`,
+										index + 1
+									),
+									{ once: true }
+								);
+						}
+
+						if (index == 0) {
+							document
+								.querySelector(".alert-dialog-footer .prevButton")
+								.classList.add("isdisabled");
+						} else if (index == 1) {
+							document
+								.querySelector(".alert-dialog-footer .prevButton")
+								.classList.remove("isdisabled");
+
+							document
+								.querySelector(".alert-dialog-footer .prevButton")
+								.addEventListener(
+									"click",
+									prevPageClick.bind(e, "[LOCAL]/eula.html", 0),
+									{ once: true }
+								);
+						} else {
+							document
+								.querySelector(".alert-dialog-footer .prevButton")
+								.classList.remove("isdisabled");
+
+							document
+								.querySelector(".alert-dialog-footer .prevButton")
+								.addEventListener(
+									"click",
+									prevPageClick.bind(
+										e,
+										`${SiteSafeAPI.APIServerDefault}/${
+											SiteSafeAPI.user.provisioning.provider
+										}/${
+											SiteSafeAPI.user.provisioning.providerData.firstRun[
+												index - 1
+											]
+										}`,
+										index - 1
+									),
+									{ once: true }
+								);
+						}
+					});
+			};
+
+			dialogLoadPage("[LOCAL]/eula.html", 0);
+
+			document.querySelector(".cancelButton").addEventListener(
+				"click",
+				function () {
+					dialog.hide();
+					reject("CANCEL");
+				},
+				{ once: true }
+			);
+		});
 	},
 };
 

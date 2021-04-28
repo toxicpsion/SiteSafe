@@ -1,8 +1,17 @@
 /*ONSEN SETUP*/
-
+html,
+body {
+	width: 100%;
+	height: 100%;
+}
 .tabbar__badge.notification {
 	background-color: transparent;
 	color: white;
+}
+
+.forceScrollBar {
+	overflow-y: scroll;
+	overflow-x: hidden;
 }
 
 .pageTitleBar {
@@ -47,6 +56,13 @@
 	background-color: rgba(255, 100, 100, 0.9);
 	margin-right: 20px;
 }
+.alert-dialog-title {
+	text-align: center;
+}
+.alert-dialog .isdisabled {
+	color: rgba(180, 180, 180, 0.9);
+	pointer-events: none;
+}
 
 .documentListItem .center {
 	overflow-x: clip;
@@ -66,10 +82,10 @@
 }
 
 .printableDocument {
-	margin: .5em;
+	margin: 0.5em;
 	display: flex;
 	flex-direction: column;
-	padding: .5em;
+	padding: 0.5em;
 	border: 1px solid black;
 	background-color: white;
 	font-size: 80%;
@@ -145,7 +161,6 @@ ons-button span {
 	flex-wrap: nowrap;
 	flex-direction: column-reverse;
 	justify-content: stretch;
-	;
 }
 .controlItem .subItems {
 	margin-left: 2em;
@@ -161,7 +176,7 @@ ons-button span {
 }
 
 .controlItem .itemHeader {
-/* 	flex-basis: 100%; */
+	/* 	flex-basis: 100%; */
 	border-top: 1px solid darkgrey;
 	order: 1;
 }
@@ -176,7 +191,7 @@ ons-button span {
 
 	font-size: small;
 	font-weight: 300;
-	order: 3
+	order: 3;
 }
 .controlItem .itemResponse {
 	white-space: nowrap;
@@ -184,23 +199,20 @@ ons-button span {
 	float: right;
 }
 .subItems .subItems .controlItem {
-	
 	flex-grow: 1;
 	flex-basis: 40%;
 	justify-content: flex-start;
-
 }
-.printableDocument > .controlItem > .itemHeader{
+.printableDocument > .controlItem > .itemHeader {
 	font-weight: bold;
 	flex-direction: column;
 }
 
-.subItems .subItems .controlItem .itemHeader{
+.subItems .subItems .controlItem .itemHeader {
 	color: red;
 	flex-grow: 1;
 	flex-basis: 100%;
 	border: none;
-	
 }
 .ctlCheckBox ons-icon {
 	padding-inline-start: 1em;
@@ -209,8 +221,7 @@ ons-button span {
 .signatureBox {
 	padding: 2px;
 	border: 2px solid darkgray;
-	width: 80%
-
+	width: 80%;
 }
 .printableDocument .signatureBox {
 	padding: 2px;
@@ -284,17 +295,18 @@ input[type=range]::-webkit-slider-thumb {
 }*/
 
 @media print {
-	*{background-color: white;}
+	* {
+		background-color: white;
+	}
 	.printableDocument {
 		position: absolute;
 		left: 0;
-		top:0;
+		top: 0;
 		right: 0;
 		bottom: auto;
 		border: none;
 		padding: none;
 		margin: none;
-
 	}
 	.commandBar {
 		display: none;

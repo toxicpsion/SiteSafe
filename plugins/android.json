@@ -39,6 +39,9 @@
     },
     "cordova.custom.plugins.exitapp": {
       "PACKAGE_NAME": "ca.sixwest.sitesafe"
+    },
+    "cordova-plugin-keyboard": {
+      "PACKAGE_NAME": "ca.sixwest.sitesafe"
     }
   },
   "dependent_plugins": {}

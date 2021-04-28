@@ -7,6 +7,7 @@
   <allow-navigation href="*"/>
   <allow-intent href="itms:*"/>
   <allow-intent href="itms-apps:*"/>
+	
   <preference name="loglevel" value="DEBUG"/>
   <preference name="AndroidLaunchMode" value="singleTop"/>
   <preference name="ErrorUrl" value=""/>
@@ -72,13 +73,7 @@
     <preference name="AndroidXEnabled" value="true"/>
 		<preference name="compileSdkVersion" value="29" />
   </platform>
-  <platform name="electron">
-    <icon src="/res/electron/icon/icon_electron_512.png" width="512" height="512"/>
-    <splash src="/res/electron/screen/electron_splash_image.png" width="620" height="300"/>
-    <preference name="SplashScreenWidth" value="620"/>
-    <preference name="SplashScreenHeight" value="300"/>
-    <preference name="ShowSplashScreen" value="false"/>
-  </platform>
+
   <preference name="WindowsStorePublisherName" value="My Name"/>
   <preference name="WindowsStoreIdentityName" value="dd1b5f57-f121-d497-ce96-04d5c745aed5"/>
   <preference name="KeepRunning" value="true"/>

@@ -31,7 +31,8 @@
                 "ANDROID_GOOGLE_SERVICES_VERSION": "4.3.4",
                 "ANDROID_GRADLE_TOOLS_VERSION": "4.1.0"
             },
-            "cordova.custom.plugins.exitapp": {}
+            "cordova.custom.plugins.exitapp": {},
+            "cordova-plugin-keyboard": {}
         },
         "platforms": [
             "android"
@@ -47,6 +48,7 @@
         "cordova-android": "^9.1.0",
         "cordova-plugin-exitapp": "^1.0.0",
         "cordova-plugin-fcm-with-dependecy-updated": "git+https://github.com/michaelbonner/cordova-plugin-fcm-with-dependecy-updated.git",
+        "cordova-plugin-keyboard": "^1.2.0",
         "cordova-plugin-printer": "git+https://github.com/toxicpsion/cordova-plugin-printer.git"
     }
 }

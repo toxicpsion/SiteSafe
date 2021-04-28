@@ -4,19 +4,19 @@
 		<meta charset="utf-8" />
 		<meta
 			name="viewport"
-			content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
-		/>
+			content="width=device-width, height=device-height, initial-scale=1,
+			maximum-scale=1, user-scalable=no, target-densitydpi=device-dpi"
+			/>
 
 		<meta
 			http-equiv="Content-Security-Policy"
-			content="
-      default-src 'self' data: gap: https://ssl.gstatic.com https://*:* 'unsafe-eval' 'unsafe-inline'; 
-      style-src 'self' 'unsafe-inline'; 
-      media-src *; 
-      img-src 'self' blob: http://*:* https://*:* data: content:;
-      connect-src https://*:* http://*.6west.ca:* file://* http://localhost:* ws://localhost:*;
-      "
-		/>
+			content="default-src 'self' data: file: gap: https://ssl.gstatic.com https://*:*
+			'unsafe-eval' 'unsafe-inline';
+			style-src 'self' 'unsafe-inline';
+			media-src *;
+			img-src 'self' blob: http://*:* https://*:* data: content:;
+			connect-src https://*:* http://*.6west.ca:* file: http://localhost:*
+			ws://localhost:*;" />
 
 		<script src="js/sha1.js"></script>
 
@@ -60,15 +60,18 @@
 					<img src="logo.png" style="width: 80%; margin-bottom: -5em;">
 					<form>
 						<p>
-							<ons-input input-id="username" inputmode="email" autocomplete="current-email" autocapitalize="none"
-								onkeyup="if (event.keyCode==13) { document.getElementById('password').focus(); }" placeholder="Username">
+							<ons-input input-id="username" inputmode="email"
+								autocomplete="current-email" autocapitalize="none"
+								onkeyup="if (event.keyCode==13) {
+								document.getElementById('password').focus(); }" placeholder="Username">
 							</ons-input>
 						</p>
 						<p>
-							<ons-input input-id="password" autocomplete="current-password" type="password" onkeyup="if (event.keyCode==13) 
+							<ons-input input-id="password" autocomplete="current-password"
+								type="password" onkeyup="if (event.keyCode==13)
 								{
-										document.getElementById('password').blur();
-										document.getElementById('btnLogin').click();
+								document.getElementById('password').blur();
+								document.getElementById('btnLogin').click();
 								}" placeholder="Password">
 							</ons-input>
 						</p><br>
@@ -76,11 +79,15 @@
 							<ons-button id="btnLogin">Sign in</ons-button>
 						</p>
 						<p>
-						<ons-button modifier="quiet" onclick="app.forgotPassword()">Forgot Password?</ons-button>
+							<ons-button modifier="quiet" onclick="app.forgotPassword()">Forgot
+								Password?</ons-button>
 						</p>
 					</form>
 				</div>
-			
+
+
+
+
 			</ons-page>
 		</template>
 		<template id="tpl_tabNavigator">
@@ -90,8 +97,7 @@
 						label="Documents"
 						page="tpl_docList"
 						icon="file"
-						active
-					>
+						active>
 					</ons-tab>
 					<ons-tab label="Reference" page="tpl_refList" icon="book">
 					</ons-tab>
@@ -156,21 +162,22 @@
 				<div class="renderCanvas"></div>
 			</ons-page>
 		</template>
-		
+
 		<template id="tpl_documentRenderer">
 			<ons-page id="p_docRender">
-					<ons-toolbar class="topToolbar">
-						<img class="toolbarIcon">
+				<ons-toolbar class="topToolbar">
+					<img class="toolbarIcon">
 
-							<div class="right" style='width: 80%; padding-right: .25em'>
-								 <ons-button class="saveButton"><ons-icon icon="save"></ons-icon>&nbsp;Save</ons-button>
-								 <ons-button onclick="document.getElementById('rootNavigator').popPage()"><ons-icon icon="ban" ></ons-icon> Cancel </ons-button>
-							</div>
-					</ons-toolbar>
-					<div class="renderCanvas"></div>
+					<div class="right" style='width: 80%; padding-right: .25em'>
+						<ons-button class="saveButton"><ons-icon icon="save"></ons-icon>&nbsp;Save</ons-button>
+						<ons-button onclick="document.getElementById('rootNavigator').popPage()"><ons-icon
+								icon="ban"></ons-icon> Cancel </ons-button>
+					</div>
+				</ons-toolbar>
+				<div class="renderCanvas"></div>
 			</ons-page>
-	</template>
-	
+		</template>
+
 		<template id="tpl_blankpage">
 			<ons-page id="p_blankPage"></ons-page>
 		</template>
@@ -186,19 +193,19 @@
 					<span class="list-item__subtitle"></span>
 				</div>
 				<div class="right controlArea">
-			
+
 				</div>
-		<div class="expandable-content">
-			<ons-list class="subDocList"></ons-list>
-		</div>
+				<div class="expandable-content">
+					<ons-list class="subDocList"></ons-list>
+				</div>
 			</ons-list-item>
 		</template>
 
 		<template id="subdocumentItem">
-			<ons-list-item class="subDocItem" modifier="nodivider" tappable >			
+			<ons-list-item class="subDocItem" modifier="nodivider" tappable>
 
 				<div class="center">
-					<span class="list-item__title"></span>	
+					<span class="list-item__title"></span>
 					<span class="list-item__subtitle"></span>
 				</div>
 				<div class="right subdocumentControlArea"></div>
@@ -212,7 +219,7 @@
 				</div>
 				<div class="center">
 					<span class="list-item__title"></span>
-					<span class="list-item__subtitle" ></span>
+					<span class="list-item__subtitle"></span>
 				</div>
 			</ons-list-item>
 		</template>

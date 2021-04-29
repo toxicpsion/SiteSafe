@@ -292,6 +292,51 @@ let SiteSafeAPI = mod_SiteSafeAPI();
 };
  */
 
+function htmlSubmit(document, e) {
+	var thisRequest = {};
+
+	document.forEach((i) => {
+		if (i.value.substr(0, 1) == "$") {
+			i.value = Function("return " + i.value.substr(1))();
+		}
+		if (i.name.substr(0, 1) == "#") {
+			item = i.name.substr(1).split(":")[0];
+			switch (item) {
+				case "request": {
+					key = i.name.split(":")[1];
+					if (key.substr(0, 1) == "@") {
+						key = key.substr(1);
+
+						if (typeof thisRequest[key] != "object") thisRequest[key] = {};
+
+						thisRequest[key][i.name.split(":")[2]] = i.value;
+					} else {
+						thisRequest[key] = i.value;
+					}
+				}
+			}
+		}
+	});
+	//thisRequest.data = undefined;
+	console.log(thisRequest);
+	fetch(
+		`${SiteSafeAPI.APIServerDefault}${
+			thisRequest.data.api_endpoint ? thisRequest.data.api_endpoint : "/log"
+		}`,
+		{
+			method: "post",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(thisRequest),
+		}
+	)
+		.then((r) => r.json())
+		.then((data) => {
+			alert(data);
+		});
+}
+
 function unifiedFetch(path) {
 	function fetchLocal(url) {
 		return new Promise(function (resolve, reject) {
@@ -310,7 +355,8 @@ function unifiedFetch(path) {
 	switch (String(path).substr(0, 8)) {
 		case "[ASSET]/": {
 			path = String(path).substr(8);
-			path = `${SiteSafeAPI.APIServerDefault}/${userdata.provisioning.provider}/${path}`;
+			path = `${SiteSafeAPI.APIServerDefault}/${SiteSafeAPI.user.provisioning.provider}/${path}`;
+			//Fixup Path with provider info, and fall though
 		}
 		case "https://": {
 			return fetch(path);
@@ -342,7 +388,6 @@ let app = {
 				});
 		});
 	},
-
 	initialize: () => {
 		if (typeof cordova == typeof undefined) {
 			app.fatalError(`App Startup Failed`, `Cordova seems to be missing.`);
@@ -1660,15 +1705,19 @@ let app = {
 						for (const k in SiteSafeAPI.user) {
 							const element = SiteSafeAPI.user[k];
 							if (typeof element == "string") {
-								dt = d.replace(`%${k}%`, `${element}`);
-								d = dt;
+								rep = new RegExp(`%${k}%`, "g");
+
+								d = String(d).replace(rep, `${element}`);
 							}
 
 							if (typeof element == "object") {
 								for (const k2 in element) {
 									const subelement = element[k2];
-									dt = d.replace(`%${k}.${k2}%`, `${subelement}`);
-									d = dt;
+									if (typeof subelement == "string") {
+										rep2 = new RegExp(`%${k}.${k2}%`, "g");
+
+										d = String(d).replace(rep2, subelement);
+									}
 								}
 							}
 						}
@@ -1709,17 +1758,13 @@ let app = {
 								.querySelector(".alert-dialog-footer .nextButton")
 								.classList.remove("isdisabled");
 
-							document
-								.querySelector(".alert-dialog-footer .nextButton")
-								.addEventListener(
-									"click",
-									nextPageClick.bind(
-										e,
-										`${SiteSafeAPI.APIServerDefault}/${SiteSafeAPI.user.provisioning.provider}/${SiteSafeAPI.user.provisioning.providerData.firstRun[index]}`,
-										index + 1
-									),
-									{ once: true }
-								);
+							document.querySelector(
+								".alert-dialog-footer .nextButton"
+							).onclick = nextPageClick.bind(
+								e,
+								`${SiteSafeAPI.APIServerDefault}/${SiteSafeAPI.user.provisioning.provider}/${SiteSafeAPI.user.provisioning.providerData.firstRun[index]}`,
+								index + 1
+							);
 						}
 
 						if (index == 0) {
@@ -1731,36 +1776,33 @@ let app = {
 								.querySelector(".alert-dialog-footer .prevButton")
 								.classList.remove("isdisabled");
 
-							document
-								.querySelector(".alert-dialog-footer .prevButton")
-								.addEventListener(
-									"click",
-									prevPageClick.bind(e, "[LOCAL]/eula.html", 0),
-									{ once: true }
-								);
+							document.querySelector(
+								".alert-dialog-footer .prevButton"
+							).onclick = prevPageClick.bind(e, "[LOCAL]/eula.html", 0);
 						} else {
 							document
 								.querySelector(".alert-dialog-footer .prevButton")
 								.classList.remove("isdisabled");
 
-							document
-								.querySelector(".alert-dialog-footer .prevButton")
-								.addEventListener(
-									"click",
-									prevPageClick.bind(
-										e,
-										`${SiteSafeAPI.APIServerDefault}/${
-											SiteSafeAPI.user.provisioning.provider
-										}/${
-											SiteSafeAPI.user.provisioning.providerData.firstRun[
-												index - 1
-											]
-										}`,
-										index - 1
-									),
-									{ once: true }
-								);
+							document.querySelector(
+								".alert-dialog-footer .prevButton"
+							).onclick = prevPageClick.bind(
+								e,
+								`[ASSET]/${
+									SiteSafeAPI.user.provisioning.providerData.firstRun[index - 2]
+								}`,
+								index - 1
+							);
 						}
+
+						try {
+							o = dContent.querySelectorAll("input");
+
+							document.querySelector(".btnSubmit").onclick = htmlSubmit.bind(
+								e,
+								o
+							);
+						} catch {}
 					});
 			};
 

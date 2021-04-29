@@ -28,6 +28,7 @@
   </feature>
   <platform name="ios">
     <preference name="orientation" value="portrait"/>
+
     <splash src="/res/ios/screen/Default@2x~universal~anyany.png"/>
     <icon src="/res/ios/icon/icon.png" width="57" height="57"/>
     <icon src="/res/ios/icon/icon@2x.png" width="114" height="114"/>
@@ -57,6 +58,7 @@
     <preference name="hostname" value="localhost"/>
   </platform>
   <platform name="android">
+
     <icon src="/res/android/icon/ldpi.png" density="ldpi"/>
     <icon src="/res/android/icon/mdpi.png" density="mdpi"/>
     <icon src="/res/android/icon/hdpi.png" density="hdpi"/>
@@ -73,6 +75,12 @@
     <preference name="AndroidXEnabled" value="true"/>
 		<preference name="compileSdkVersion" value="29" />
   </platform>
+		<preference name="AndroidExtraFilesystems" value="assets" />
+		 <preference name="iosExtraFilesystems" value="bundle" />
+
+
+	<resource-file src="android-icon.png"/>
+
 
   <preference name="WindowsStorePublisherName" value="My Name"/>
   <preference name="WindowsStoreIdentityName" value="dd1b5f57-f121-d497-ce96-04d5c745aed5"/>

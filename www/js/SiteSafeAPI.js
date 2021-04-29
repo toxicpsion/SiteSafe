@@ -148,19 +148,21 @@ const mod_SiteSafeAPI = () => {
 			console.log("No User, Skipping Provisioning");
 		}
 
-		await FCM.requestPushPermission({
+		FCM.requestPushPermission({
 			ios9Support: {
 				timeout: 10, // How long it will wait for a decision from the user before returning `false`
 				interval: 0.3, // How long between each permission verification
 			},
-		});
+		})
+			.then(async (perm) => {
+				if (perm) {
+					let token = await FCM.getToken();
+					localState.myToken = token;
 
-		if (FCM.hasPermission()) {
-			let token = await FCM.getToken();
-			localState.myToken = token;
-
-			const disposable = FCM.onNotification(pushMessageHandler);
-		}
+					const disposable = FCM.onNotification(pushMessageHandler);
+				}
+			})
+			.catch((e) => console.log(e));
 
 		console.debug("Binding ConnectionState Handlers");
 
@@ -168,7 +170,7 @@ const mod_SiteSafeAPI = () => {
 		document.addEventListener("online", connectionStateChange, false);
 
 		console.log("Sync Templates.");
-		console.log(await this.templates);
+		await this.templates;
 
 		console.log("Sync Documents.");
 
@@ -223,16 +225,16 @@ const mod_SiteSafeAPI = () => {
 						clearTimeout(t);
 
 						localState.user = data;
-						
+
 						app
-						.dialogFirstRun(data)
-						.then((e) => {
-							alert("then");
-							console.log(e);
-						})
-						.catch((e) => {
-							resolve(e)
-						});
+							.dialogFirstRun(data)
+							.then((e) => {
+								alert("then");
+								console.log(e);
+							})
+							.catch((e) => {
+								resolve(e);
+							});
 					} else {
 						//populate our passhash, as server doesn't send it.
 						data.passhash = hex_sha1(password);

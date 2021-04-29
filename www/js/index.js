@@ -338,17 +338,40 @@ function htmlSubmit(document, e) {
 }
 
 function unifiedFetch(path) {
+	console.log("unified fetch: " + path);
 	function fetchLocal(url) {
+		debugger;
+		console.log("FetchLocal: ", url);
 		return new Promise(function (resolve, reject) {
-			var xhr = new XMLHttpRequest();
-			xhr.onload = function () {
-				resolve(new Response(xhr.responseText, { status: xhr.status }));
-			};
-			xhr.onerror = function () {
-				reject(new TypeError("Local request failed"));
-			};
-			xhr.open("GET", url);
-			xhr.send(null);
+			window.requestFileSystem(
+				LocalFileSystem.PERSISTENT,
+				0,
+				(fs) => {
+					window.resolveLocalFileSystemURL(
+						cordova.file.applicationDirectory + "www/" + path,
+						(fileEntry) => {
+							fileEntry.file(
+								function (fileEntry) {
+									alert(
+										`path to file: ${fileEntry.fullPath}\nfile to read: ${fileEntry.file}`
+									);
+
+									var reader = new FileReader();
+									reader.onloadend = function () {
+										resolve(this.result);
+									};
+									reader.readAsText(fileEntry);
+								},
+								(e) => reject(e)
+							);
+						},
+						console.warn
+					);
+				},
+				(e) => reject(e)
+			);
+
+			return;
 		});
 	}
 
@@ -359,12 +382,17 @@ function unifiedFetch(path) {
 			//Fixup Path with provider info, and fall though
 		}
 		case "https://": {
-			return fetch(path);
+			d = fetch(path)
+				.then((d) => d.text())
+				.catch((e) => alert(e));
+
+			return d;
 			break;
 		}
 		case "[LOCAL]/": {
 			path = String(path).substr(8);
-			return fetchLocal(cordova.file.applicationDirectory + "www/" + path);
+
+			return fetchLocal(path);
 			break;
 		}
 		default:
@@ -1699,8 +1727,6 @@ let app = {
 
 			let dialogLoadPage = function (page, index) {
 				unifiedFetch(page)
-					.then((d) => d.text())
-
 					.then((d) => {
 						for (const k in SiteSafeAPI.user) {
 							const element = SiteSafeAPI.user[k];

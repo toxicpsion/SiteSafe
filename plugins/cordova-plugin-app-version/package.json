@@ -1,14 +1,35 @@
 {
-  "name": "cordova-plugin-app-version",
-  "version": "0.1.12",
-  "description": "Cordova plugin to return the version number of the current app",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
+  "_from": "git+https://github.com/toxicpsion/cordova-plugin-app-version.git",
+  "_id": "cordova-plugin-app-version@0.1.12",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/cordova-plugin-app-version",
+  "_phantomChildren": {},
+  "_requested": {
     "type": "git",
-    "url": "git+https://github.com/sampart/cordova-plugin-app-version.git"
+    "raw": "https://github.com/toxicpsion/cordova-plugin-app-version.git",
+    "rawSpec": "https://github.com/toxicpsion/cordova-plugin-app-version.git",
+    "saveSpec": "git+https://github.com/toxicpsion/cordova-plugin-app-version.git",
+    "fetchSpec": "https://github.com/toxicpsion/cordova-plugin-app-version.git",
+    "gitCommittish": null
   },
+  "_requiredBy": [
+    "#DEV:/",
+    "#USER"
+  ],
+  "_resolved": "git+https://github.com/toxicpsion/cordova-plugin-app-version.git#294c85a314d29567f072c3ffe4f51a4e6cb23f29",
+  "_spec": "https://github.com/toxicpsion/cordova-plugin-app-version.git",
+  "_where": "/home/toxicpsion/Documents/Projects/SiteSafe",
+  "author": {
+    "name": "whiteoctober"
+  },
+  "bugs": {
+    "url": "https://github.com/sampart/cordova-plugin-app-version/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Cordova plugin to return the version number of the current app",
+  "homepage": "https://github.com/sampart/cordova-plugin-app-version#readme",
   "keywords": [
     "cordova",
     "ecosystem:cordova",
@@ -17,14 +38,15 @@
     "appversion",
     "plugin"
   ],
-  "author": "whiteoctober",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/sampart/cordova-plugin-app-version/issues"
+  "name": "cordova-plugin-app-version",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sampart/cordova-plugin-app-version.git"
   },
-  "homepage": "https://github.com/sampart/cordova-plugin-app-version#readme"
-
-,"_resolved": "https://registry.npmjs.org/cordova-plugin-app-version/-/cordova-plugin-app-version-0.1.12.tgz"
-,"_integrity": "sha512-P+0d9+h9HasanKuMd8tcEpuJJlsVmClie3Mbq16v3TV/VroDrgYB6Ea8Imkc/WjjMVSBCjWB+pji1LoupWlddA=="
-,"_from": "cordova-plugin-app-version@0.1.12"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "types": "./types/index.d.ts",
+  "version": "0.1.12"
 }

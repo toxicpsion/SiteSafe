@@ -338,11 +338,13 @@ function htmlSubmit(document, e) {
 }
 
 function unifiedFetch(path) {
-	console.log("unified fetch: " + path);
 	function fetchLocal(url) {
-		debugger;
-		console.log("FetchLocal: ", url);
 		return new Promise(function (resolve, reject) {
+			let wd = setTimeout(() => {
+				alert("timed out waiting for local file");
+				reject();
+			}, 5000);
+
 			window.requestFileSystem(
 				LocalFileSystem.PERSISTENT,
 				0,
@@ -350,14 +352,15 @@ function unifiedFetch(path) {
 					window.resolveLocalFileSystemURL(
 						cordova.file.applicationDirectory + "www/" + path,
 						(fileEntry) => {
+							alert("got filesystem");
 							fileEntry.file(
 								function (fileEntry) {
-									alert(
-										`path to file: ${fileEntry.fullPath}\nfile to read: ${fileEntry.file}`
-									);
-
+									alert("got file");
 									var reader = new FileReader();
 									reader.onloadend = function () {
+										alert("finished loadfile");
+
+										clearTimeout(wd);
 										resolve(this.result);
 									};
 									reader.readAsText(fileEntry);
@@ -657,6 +660,67 @@ let app = {
 	pageShowHandler: function (event) {
 		console.debug("pageShowHandler stub: " + event.target.id);
 		switch (event.target.id) {
+			case "p_docView": {
+				debugger;
+				let cBar = document.querySelector(".commandBar");
+				cBar.innerHTML = "";
+
+				cBar.appendChild(
+					ons.createElement(
+						`<ons-button class="cancelButton" icon="times">&nbsp;Close</ons-button>`
+					)
+				);
+				let cButtonsR = ons.createElement("<div></div>");
+
+				cButtonsR.appendChild(
+					ons.createElement(
+						`<ons-button class="printButton" icon="print"></ons-button>`
+					)
+				);
+				if (SiteSafeAPI.user.auth.rules.includes("delete")) {
+					cButtonsR.appendChild(
+						ons.createElement(
+							`<ons-button class="deleteButton" icon="trash"></ons-button>`
+						)
+					);
+				}
+				cBar.appendChild(cButtonsR);
+
+				cBar
+					.querySelector(".cancelButton")
+					.addEventListener("click", function () {
+						cBar.style.visibility = "hidden";
+						cBar.innerHTML = "";
+
+						document.getElementById("rootNavigator").popPage();
+					});
+
+				cBar
+					.querySelector(".printButton")
+					.addEventListener("click", function () {
+						let toPrint = document
+							.getElementById("p_docView")
+							.querySelector(".renderCanvas").content;
+
+						cordova.plugins.printer.print(toPrint, { margin: false }, (res) => {
+							console.log("Printing: " + event.target.data);
+
+							cBar.innerHTML = "";
+							cBar.style.visibility = "hidden";
+							document.getElementById("rootNavigator").popPage();
+						});
+					});
+
+				cBar.style.visibility = "visible";
+
+				let canvas = document
+					.getElementById("p_docView")
+					.querySelector(".renderCanvas");
+				debugger;
+				canvas.appendChild(app.renderDocument(event.target.data));
+
+				break;
+			}
 			case "p_accountPage": {
 				if (event.target.data.isFirstRun) {
 					alert(JSON.stringify(event.target.data));
@@ -673,7 +737,7 @@ let app = {
 					);
 					cBar.appendChild(
 						ons.createElement(
-							`<ons-button class="saveButton disabled" icon="save">&nbsp;Save</ons-button>`
+							`<ons-button class="editButton" icon="edit">&nbsp;Edit</ons-button>`
 						)
 					);
 					cBar
@@ -686,6 +750,28 @@ let app = {
 							rootNavigator.popPage();
 						});
 
+					cBar.querySelector(".editButton").addEventListener("click", () => {
+						debugger;
+						let t = UTIL.cloneObject(SiteSafeAPI.user);
+						SiteSafeAPI.provisioning.then((provis) => {
+							t.provisioning = provis;
+							app
+								.parsedDialogForm(
+									`${SiteSafeAPI.APIServerDefault}/confirmAccount.html`,
+									t
+								)
+								.then(() => {
+									cBar.style.visibility = "hidden";
+									cBar.innerHTML = "";
+									document.querySelector(".topToolbar").style.visibility =
+										"visible";
+									rootNavigator.popPage();
+								})
+								.catch(() => {
+									alert("catch?!!");
+								});
+						});
+					});
 					cBar.style.visibility = "visible";
 
 					//let page = document.getElementById("p_accountPage");
@@ -729,6 +815,7 @@ let app = {
 						template = a;
 						UTIL.waitForDOMSelector("#p_docRender .renderCanvas").then(
 							(canvas) => {
+								canvas.classList.add("fillableDocument");
 								a.data.forEach((item) => {
 									let thisItem = SiteSafeAPI.getFillableControlFromJSON(item);
 									thisItem.addEventListener("touchend", function () {
@@ -1039,7 +1126,7 @@ let app = {
 				let canvas = document
 					.getElementById("p_docView")
 					.querySelector(".renderCanvas");
-
+				debugger;
 				canvas.appendChild(app.renderDocument(event.target.data));
 
 				break;
@@ -1065,7 +1152,7 @@ let app = {
 
 		SiteSafeAPI.listResource("reference").then((resourceList) => {
 			return;
-			debugger;
+			//debugger;
 			let newResources = UTIL.getNewObjectKeys(
 				resourceList,
 				app.state.referenceList
@@ -1088,7 +1175,7 @@ let app = {
 			}
 
 			if (Object.keys(newResources).length) {
-				debugger;
+				//debugger;
 			}
 
 			resourceList.forEach((i) => {
@@ -1441,6 +1528,7 @@ let app = {
 
 							SiteSafeAPI.templates
 								.then((tpl) => {
+									debugger;
 									t = tpl[tDoc.template];
 
 									thisItem.querySelector(".list-item__title").innerHTML = tDoc
@@ -1462,9 +1550,25 @@ let app = {
 										ev.stopPropagation();
 										switch (ev.type) {
 											case "click": {
+												SiteSafeAPI.templates.then((e) => {
+													console.log(e);
+													//tDoc
+													debugger;
+													//	tDoc.template = e[tDoc.template];
+
+													document
+														.getElementById("rootNavigator")
+														.pushPage("tpl_docView", {
+															data: tDoc,
+														});
+												});
+
+												return;
 												sixWestPromiseAPI
 													.fetchResource("templates/" + thisDocument.template)
-													.then((e) => console.warn(e, thisDocument))
+													.then((e) => {
+														console.warn(e, tDoc);
+													})
 
 													//;
 
@@ -1523,8 +1627,10 @@ let app = {
 
 									thisItem.addEventListener("click", (e) =>
 										//VIEW
+
 										{
-											sixWestPromiseAPI
+											//debugger
+											/* 				sixWestPromiseAPI
 												.fetchUser(`${thisDocument.author}`)
 												.then((t) => {
 													thisDocument.authorName = t.name;
@@ -1548,7 +1654,7 @@ let app = {
 																.catch((e) => SiteSafeAPI.log(e));
 														})
 														.catch((e) => console.error(e));
-												});
+												}); */
 										}
 									);
 									pNode.querySelector(".subDocList").appendChild(thisItem);
@@ -1564,23 +1670,30 @@ let app = {
 	},
 	renderDocument: function (thisDoc) {
 		let cv = ons.createElement(`<div class="printableDocument"></div>`);
-		let template = thisDoc.templateData.data;
+
+		let template = SiteSafeAPI.localState.templates[thisDoc.template];
+		if (!template) {
+			alert("template Error in document");
+		}
+
 		cv.innerHTML = `
 							<img class="headerIcon">
 								<div class="titleBlock">
-									<div class="pageFriendlyName">${thisDoc.templateData.friendlyName}</div>
+									<div class="pageFriendlyName">${template.meta.title}</div>
 									<div class="pageCreateDate">${thisDoc.createdTimeLocalString}</div>
 								</div>
 								<div class="subtitleBlock">
-								<div class="pageTitle">${thisDoc.parentNode.data.title}</div> 
-								<div class="pageSubTitle">${thisDoc.parentNode.data.subtitle}</div>
+								<div class="pageTitle">${""}</div> 
+								<div class="pageSubTitle">${""}</div>
 								</div>
-								<div class="pageAuthor">Completed by: ${thisDoc.authorName}</div>
+								<div class="pageAuthor">Completed by: ${thisDoc.meta.authorName}</div>
 								`;
 
 		console.log(thisDoc.data);
 		console.log(template);
-		template.forEach(function (i) {
+
+		template.data.forEach(function (i) {
+	
 			//Map Response Values
 			i.value = thisDoc.data[i.id];
 			if (i.data) {
@@ -1588,7 +1701,7 @@ let app = {
 					si.value = thisDoc.data[si.id];
 				});
 			}
-			let thisItem = sixWestPromiseAPI.getPrintableControlFromJSON(i);
+			let thisItem = SiteSafeAPI.getPrintableControlFromJSON(i);
 			cv.appendChild(thisItem);
 		});
 
@@ -1596,7 +1709,7 @@ let app = {
 	},
 	assignDocument: function (thisDoc) {
 		//Remove old List if exists
-		debugger;
+		//debugger;
 		var dialog = document.getElementById("my-alert-dialog");
 		if (dialog) {
 			dialog.remove();
@@ -1625,7 +1738,7 @@ let app = {
 		);
 
 		SiteSafeAPI.listUsers().then((users) => {
-			debugger;
+			//debugger;
 			users.forEach((user) => {
 				let row = document.getElementById("genericListItem").cloneNode(true);
 
@@ -1688,160 +1801,250 @@ let app = {
 
 		dialog.show();
 	},
-	dialogFirstRun: function (userdata) {
+	parsedDialogForm: function (formName, formData = {}) {
 		return new Promise(function (resolve, reject) {
-			Keyboard.hide();
+			//Keyboard.hide();
 
-			var dialog = document.getElementById("my-alert-dialog");
-			if (dialog) {
-				dialog.remove();
-			}
+			debugger;
+			unifiedFetch(formName)
+				.then((d) => {
+					//	alert(d);
+					//regex %VAR% to key/values in formData
+					for (const k in formData) {
+						const element = formData[k];
+						if (typeof element == "string") {
+							rep = new RegExp(`%${k}%`, "g");
 
-			dialog = ons.createElement(
-				`<ons-alert-dialog id="my-alert-dialog">
-								<div class="alert-dialog-title">Welcome to SiteSafe!</div>
-								<div id="myDialogContent" class="alert-dialog-content">
-								</div>
-								<div class="alert-dialog-footer">
-								<ons-alert-dialog-button class="cancelButton">Cancel</ons-alert-dialog-button>
-								<ons-alert-dialog-button class="nextButton">Next</ons-alert-dialog-button>
+							d = String(d).replace(rep, `${element}`);
+						}
 
-									<ons-alert-dialog-button class="prevButton">Previous</ons-alert-dialog-button>
-									
-								</div>
-							</ons-alert-dialog>`,
-				{ append: true }
-			);
+						if (typeof element == "object") {
+							for (const k2 in element) {
+								const subelement = element[k2];
+								if (typeof subelement == "string") {
+									rep2 = new RegExp(`%${k}.${k2}%`, "g");
 
-			document.querySelector(".alert-dialog").style.width = "90vw";
-			document.getElementById("myDialogContent").style.height = "70vh";
-			dialog.show();
-
-			let nextPageClick = function (p, i, e) {
-				dialogLoadPage(p, i);
-			};
-
-			let prevPageClick = function (p, i, e) {
-				dialogLoadPage(p, i);
-			};
-
-			let dialogLoadPage = function (page, index) {
-				unifiedFetch(page)
-					.then((d) => {
-						for (const k in SiteSafeAPI.user) {
-							const element = SiteSafeAPI.user[k];
-							if (typeof element == "string") {
-								rep = new RegExp(`%${k}%`, "g");
-
-								d = String(d).replace(rep, `${element}`);
-							}
-
-							if (typeof element == "object") {
-								for (const k2 in element) {
-									const subelement = element[k2];
-									if (typeof subelement == "string") {
-										rep2 = new RegExp(`%${k}.${k2}%`, "g");
-
-										d = String(d).replace(rep2, subelement);
-									}
+									d = String(d).replace(rep2, subelement);
 								}
 							}
 						}
-						return d;
-					})
-					.then((d) => {
-						d = `<div class="forceScrollBar" style="
-						">${d}</div>`;
-						return d;
-					})
-					.then((d) => {
-						loadedContent = ons.createElement(d);
+					}
+					return d;
+				})
+				.then((d) => {
+					//wrap in scrollable
+					d = `<div class="forceScrollBar">${d}</div>`;
+					return d;
+				})
+				.then((d) => {
+					loadedContent = ons.createElement(d); //load for preprocess
 
-						try {
-							let dTitle = loadedContent.querySelector(".dialogTitle")
-								.innerHTML;
-							document.querySelector(".alert-dialog-title").innerHTML = dTitle;
-						} catch {}
+					try {
+						document.querySelector("ons-alert-dialog").remove();
+					} catch {}
 
-						dContent = document.getElementById("myDialogContent");
-						dContent.style.border = "1px solid lightgrey";
-						dContent.style.borderRadius = "10px";
+					dialog = ons.createElement(
+						`<ons-alert-dialog id="my-alert-dialog">
+							<div class="alert-dialog-title"></div>
+							<div class="alert-dialog-content"></div>
+							<div class="alert-dialog-footer">
+								<ons-alert-dialog-button class="dialogCancelButton">Cancel</ons-alert-dialog-button>
+								<ons-alert-dialog-button class="dialogActionButton">Next</ons-alert-dialog-button>	
+							</div>
+						</ons-alert-dialog>`,
+						{ append: true }
+					);
+					dialog.querySelector(".alert-dialog").style.width = "90vw";
 
-						dContent.style.margin = "10px";
-						dContent.innerHTML = "";
+					dialog.querySelector(".alert-dialog-title").style.width = "80vw";
+					dialog.querySelector(".alert-dialog-title").style.display = "flex";
+					dialog.querySelector(".alert-dialog-title").style.justifyContent =
+						"space-between";
 
-						dContent.appendChild(loadedContent);
+					//dialog.title
+					try {
+						dialog.querySelector(
+							".alert-dialog-title"
+						).innerHTML = loadedContent.querySelector(
+							".dialog_title"
+						).innerHTML;
+					} catch {}
 
-						if (
-							index >=
-							SiteSafeAPI.user.provisioning.providerData.firstRun.length
-						) {
-							document
-								.querySelector(".alert-dialog-footer .nextButton")
-								.classList.add("isdisabled");
-						} else {
-							document
-								.querySelector(".alert-dialog-footer .nextButton")
-								.classList.remove("isdisabled");
+					//btnNext caption
+					try {
+						document.querySelector(
+							".alert-dialog-footer .dialogActionButton"
+						).innerHTML = loadedContent.querySelector(
+							".dialog_actionButton"
+						).innerHTML;
+					} catch {}
 
-							document.querySelector(
-								".alert-dialog-footer .nextButton"
-							).onclick = nextPageClick.bind(
-								e,
-								`${SiteSafeAPI.APIServerDefault}/${SiteSafeAPI.user.provisioning.provider}/${SiteSafeAPI.user.provisioning.providerData.firstRun[index]}`,
-								index + 1
-							);
-						}
+					dContent = dialog.querySelector(".alert-dialog-content");
+					dContent.style.border = "1px solid lightgrey";
+					dContent.style.borderRadius = "10px";
 
-						if (index == 0) {
-							document
-								.querySelector(".alert-dialog-footer .prevButton")
-								.classList.add("isdisabled");
-						} else if (index == 1) {
-							document
-								.querySelector(".alert-dialog-footer .prevButton")
-								.classList.remove("isdisabled");
+					dContent.style.margin = "10px";
+					dContent.innerHTML = "";
 
-							document.querySelector(
-								".alert-dialog-footer .prevButton"
-							).onclick = prevPageClick.bind(e, "[LOCAL]/eula.html", 0);
-						} else {
-							document
-								.querySelector(".alert-dialog-footer .prevButton")
-								.classList.remove("isdisabled");
+					dContent.appendChild(loadedContent);
 
-							document.querySelector(
-								".alert-dialog-footer .prevButton"
-							).onclick = prevPageClick.bind(
-								e,
-								`[ASSET]/${
-									SiteSafeAPI.user.provisioning.providerData.firstRun[index - 2]
-								}`,
-								index - 1
-							);
-						}
+					dialog.querySelector(".dialogCancelButton").onclick = function () {
+						dialog.hide();
+						reject("CANCEL");
+					};
 
-						try {
-							o = dContent.querySelectorAll("input");
+					dialog.querySelector(
+						".alert-dialog-footer .dialogActionButton"
+					).onclick = function () {
+						dContent.querySelectorAll("input").forEach((input) => {
+							switch (input.name) {
+								case "dialog_action": {
+									switch (input.value.substr(0, 1)) {
+										case "@": {
+											//Chain Promise to next Dialog
+											//debugger;
+											resolve(
+												app.parsedDialogForm(input.value.substr(1), formData)
+											);
+											break;
+										}
+										case "!": {
+											var thisRequest = {};
 
-							document.querySelector(".btnSubmit").onclick = htmlSubmit.bind(
-								e,
-								o
-							);
-						} catch {}
-					});
-			};
+											dContent.querySelectorAll("input").forEach((i) => {
+												if (i.value.substr(0, 1) == "$") {
+													i.value = Function("return " + i.value.substr(1))();
+												}
+												if (i.name.substr(0, 1) == "#") {
+													item = i.name.substr(1).split(":")[0];
+													switch (item) {
+														case "request": {
+															key = i.name.split(":")[1];
+															if (key.substr(0, 1) == "@") {
+																key = key.substr(1);
 
-			dialogLoadPage("[LOCAL]/eula.html", 0);
+																if (typeof thisRequest[key] != "object")
+																	thisRequest[key] = {};
 
-			document.querySelector(".cancelButton").addEventListener(
-				"click",
-				function () {
-					dialog.hide();
-					reject("CANCEL");
-				},
-				{ once: true }
-			);
+																thisRequest[key][i.name.split(":")[2]] =
+																	i.value;
+															} else {
+																thisRequest[key] = i.value;
+															}
+														}
+													}
+												}
+											});
+											//thisRequest.data = undefined;
+
+											passwords = document.getElementsByName("password");
+
+											let ptemp = [];
+											for (const key in passwords) {
+												i = passwords[key];
+
+												if (i.localName == "input") {
+													ptemp.push(i);
+												}
+											}
+											passwords = ptemp;
+
+											if (
+												passwords.length == 0 ||
+												passwords[0].value == passwords[1].value
+											) {
+												if (passwords.length != 0) {
+													if (passwords[0].value == "") {
+														alert("Password cannot be blank.");
+														return;
+													}
+													if (passwords[0].value != passwords[1].value) {
+														alert("The entered passwords do not match..");
+														return;
+													}
+
+													thisRequest.passhash = hex_sha1(passwords[0].value);
+												}
+
+												fetch(
+													`${SiteSafeAPI.APIServerDefault}${
+														input.value ? input.value.substr(1) : "/log"
+													}`,
+													{
+														method: "post",
+														headers: {
+															"Content-Type": "application/json",
+														},
+														body: JSON.stringify(thisRequest),
+													}
+												)
+													.then((r) => {
+														if (r.status == 201) {
+															debugger;
+															SiteSafeAPI.localState.provisioning =
+																formData.provisioning;
+
+															SiteSafeAPI.localState.user = thisRequest;
+															SiteSafeAPI.localState.user.data = null;
+															delete SiteSafeAPI.localState.user.data;
+
+															SiteSafeAPI.fs
+																.write(
+																	"userProfile",
+																	JSON.stringify(SiteSafeAPI.localState.user)
+																)
+																.then((e) => {
+																	console.debug("Saved User", e);
+																})
+																.catch((e) =>
+																	console.warn("Error Writing User")
+																)
+																.finally(() => {
+																	SiteSafeAPI.fs
+																		.write(
+																			"provisioning",
+																			JSON.stringify(
+																				SiteSafeAPI.localState.provisioning
+																			)
+																		)
+																		.then((e) =>
+																			console.debug("Saved Provisioning", e)
+																		)
+																		.catch((e) =>
+																			console.warn("Error Writing Provisioning")
+																		)
+																		.finally(() => {
+																			resolve(true);
+
+																			dialog.hide();
+																			//debugger;
+																			location.reload();
+																		});
+																});
+														} else {
+															resolve(false);
+														}
+													})
+
+													.catch((e) => {
+														//debugger;
+														resolve(false);
+													});
+
+												//
+											} else {
+												alert("Password Mismatch");
+											}
+										}
+										default:
+									}
+								}
+								default:
+							}
+						});
+					};
+					dialog.show();
+				});
 		});
 	},
 };

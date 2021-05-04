@@ -34,7 +34,7 @@ const mod_SiteSafeAPI = () => {
 	};
 
 	async function clearStorage() {
-		console.log(await fs.removeDir("/"));
+		
 	}
 
 	async function pingServer() {
@@ -89,7 +89,7 @@ const mod_SiteSafeAPI = () => {
 		switch (navigator.connection.type) {
 			case Connection.WIFI:
 			case Connection.ETHERNET: {
-				ons.notification.toast("DIRECT CONN", { timeout: 5000 });
+				//ons.notification.toast("DIRECT CONN", { timeout: 5000 });
 				console.log(await pingServer());
 				break;
 			}
@@ -98,28 +98,54 @@ const mod_SiteSafeAPI = () => {
 			case Connection.CELL_3G:
 			case Connection.CELL_2G: {
 				if (localState.preferences.minimizeDataUse) {
-					ons.notification.toast("MOBILE DATA - MIN", { timeout: 5000 });
+					//ons.notification.toast("MOBILE DATA - MIN", { timeout: 5000 });
 					localState.connected = false;
 				} else {
 					console.log(await pingServer());
-					ons.notification.toast("MOBILE DATA", { timeout: 5000 });
+					//ons.notification.toast("MOBILE DATA", { timeout: 5000 });
 				}
 				break;
 			}
 			case Connection.UNKNOWN:
 			default: {
 				localState.connected = false;
-				ons.notification.toast("DISCONNECTED", { timeout: 5000 });
+				//ons.notification.toast("DISCONNECTED", { timeout: 5000 });
 			}
 		}
 	}
 
 	function pushMessageHandler(message) {
 		console.debug("pushMessageHandler::", message);
-		ons.notification.toast(JSON.stringify(message), { timeout: 2000 });
+
+		//ons.notification.toast(JSON.stringify(message), { timeout: 2000 });
 	}
 
 	async function init() {
+		if (await fs.exists("cachever")) {
+			cordova.getAppVersion.getVersionNumber().then((version) => {
+				fs.read("cachever").then((a) => {
+					if (a != version) {
+						alert("removing stale cache");
+						fs.list("")
+							.then((file) => {
+								fs.remove(file).then((status) => {});
+							})
+							.finally((result) => {
+								fs.write("cachever", version);
+							});
+					}
+				});
+			});
+		} else {
+			fs.list("")
+			.then((file) => {
+				fs.remove(file).then((status) => {});
+			})
+			.finally((result) => {
+				fs.write("cachever", version);
+			});
+		}
+
 		console.log("Loading User Profile.");
 		if (await fs.exists("userProfile")) {
 			cachedUser = await fs.readJSON("userProfile");
@@ -129,8 +155,10 @@ const mod_SiteSafeAPI = () => {
 			console.log("No Cached User");
 			localState.user = false;
 		}
+
 		await connectionStateChange(); //doesn't fire onDeviceReady iOS
 		//Load Saved Prefs, Or Write Defaults
+		
 		console.log("Loading Preferences: ");
 		console.log(await this.preferences); //Getter Does File Load
 
@@ -186,16 +214,13 @@ const mod_SiteSafeAPI = () => {
 		}
 	}
 
-	function doFirstRun() {
-		alert("In Firstrun");
-	}
-
 	function log(logitem, module = "") {
 		if (localState.networkLogging && localState.connected) {
 		} else {
 		}
 		console.log(JSON.stringify(logitem));
 	}
+
 	function doLogin(username, password) {
 		return new Promise((resolve, reject) => {
 			let t = setTimeout(() => {
@@ -227,13 +252,13 @@ const mod_SiteSafeAPI = () => {
 						localState.user = data;
 
 						app
-							.dialogFirstRun(data)
+							.parsedDialogForm(`${APIServerDefault}/eula.html`, data)
 							.then((e) => {
-								alert("then");
-								console.log(e);
-							})
-							.catch((e) => {
 								resolve(e);
+							})
+							.catch(() => {
+								//Login Failed: Skip Dialog
+								resolve("");
 							});
 					} else {
 						//populate our passhash, as server doesn't send it.
@@ -528,6 +553,7 @@ const mod_SiteSafeAPI = () => {
 				removeSig.addEventListener("click", function () {
 					thisElement.remove();
 				});
+
 				controls.appendChild(addSig);
 				controls.appendChild(removeSig);
 				thisElement.appendChild(controls);
@@ -547,6 +573,107 @@ const mod_SiteSafeAPI = () => {
 
 		return thisElement;
 	}
+
+	function getPrintableControlFromJSON(obj_JSON) {
+
+		obj_JSON.desc = obj_JSON.desc ? obj_JSON.desc : "";
+		let subitems = obj_JSON.data ? `<div class="subItemContainer"></div>` : "";
+		console.log(obj_JSON);
+
+		switch (obj_JSON.type) {
+			case 0: {
+				//LABEL
+				let tItem = ons.createElement(`
+					<div class="printableControl">
+						<div class="itemHeader">
+							${obj_JSON.text}
+						</div>
+						${subitems}
+					</div>`);
+
+				if (obj_JSON.data) {
+					obj_JSON.data.forEach(function (subitem) {
+						tItem
+							.querySelector(".subItemContainer")
+							.appendChild(getPrintableControlFromJSON(subitem));
+					});
+				}
+
+				return tItem;
+			}
+			case 1: {
+				debugger
+				//RANGE Slider
+				let vals = [
+					"Not Applicable",
+					"Acceptable",
+					"Minor Risk",
+					"Serious Risk",
+					"Immediate Danger",
+				];
+
+				return ons.createElement(`
+				<div class="controlItem">
+					<div class="itemHeader">${obj_JSON.text}</div>
+					<div class="itemResponse">${obj_JSON.value}</div>
+					<div class="itemDesc">${obj_JSON.desc}</div>
+				</div>`);
+			}
+
+			case 2: {
+				//checkbox
+				return ons.createElement(`
+					<div class="ctlCheckBox">
+						${
+							obj_JSON.value
+								? "<ons-icon icon='check-circle'></ons-icon>"
+								: "<ons-icon icon='circle'></ons-icon>"
+						}	&nbsp;<div>${obj_JSON.text}</div>
+					</div>`);
+			}
+			case 3: {
+				// text input
+				return ons.createElement(
+					`<div class="itemHeader">${
+						obj_JSON.text ? obj_JSON.text + " :" : ""
+					} ${obj_JSON.value}</div>`
+				);
+			}
+			case 4: {
+				return ons.createElement(
+					`<div class="itemHeader">${obj_JSON.text}<pre>${
+						obj_JSON.value ? obj_JSON.value : "None"
+					}</pre></div>`
+				);
+			}
+			case 5: {
+				//UNNASIGNED
+				return ons.createElement("<div>[5]</div>");
+			}
+			case 6: {
+				debugger;
+				//signature
+				let s = ons.createElement(` 
+				<canvas class="signatureBox"></canvas>`);
+				let signaturePad = new SignaturePad(s);
+				signaturePad.off();
+				// setup pen inking
+				signaturePad.minWidth = 0.1;
+				signaturePad.maxWidth = 1.6;
+				signaturePad.penColor = "blue";
+
+
+				sigData = obj_JSON.value
+
+				
+
+						signaturePad.fromData(sigData);
+
+						return s;
+			}
+		}
+	}
+
 	return {
 		get preferences() {
 			return (async () => {
@@ -580,7 +707,7 @@ const mod_SiteSafeAPI = () => {
 			return (async () => {
 				if (localState.provisioning) {
 					console.log("Default Prov");
-					return localState.preferences;
+					return localState.provisioning;
 				} else {
 					e = await fs.exists("provisioning");
 					if (e.isFile) {
@@ -588,6 +715,13 @@ const mod_SiteSafeAPI = () => {
 						try {
 							data = await fs.readJSON(e.fullPath);
 						} catch {
+							fs.remove("provisioning").then(() => {
+								ons.notification.toast("Removed Old Provisioning Information", {
+									timeout: 2000,
+								});
+								location.reload();
+							});
+
 							throw "fs Provisioning Broken";
 						}
 
@@ -629,7 +763,7 @@ const mod_SiteSafeAPI = () => {
 														});
 												})
 												.catch((e) => {
-													console.log("PARSE ERROR IN PROVISIONING");
+													reject("PARSE ERROR IN PROVISIONING");
 												});
 										}
 									})
@@ -646,6 +780,7 @@ const mod_SiteSafeAPI = () => {
 		},
 		APIServerDefault,
 		getFillableControlFromJSON,
+		getPrintableControlFromJSON,
 		doLogin,
 		doLogout,
 		clearStorage,
@@ -716,15 +851,15 @@ const mod_SiteSafeAPI = () => {
 				//	prov = await SiteSafeAPI.provisioning;
 
 				if (localState.connected) {
-					return new Promise((resolve, reject) => {
+					return new Promise(async (resolve, reject) => {
 						fetch(APIServerDefault + "/list/documents", {
 							method: "post",
 							headers: {
 								"Content-Type": "application/json",
 							},
 							body: JSON.stringify({
-								u: localState.user,
-								p: localState.provisioning,
+								u: SiteSafeAPI.localState.user,
+								p: SiteSafeAPI.localState.provisioning,
 							}),
 						})
 							.then((resp) => resp.json())

@@ -33,9 +33,7 @@ const mod_SiteSafeAPI = () => {
 		pingTimeout: 5, //Seconds
 	};
 
-	async function clearStorage() {
-		
-	}
+	async function clearStorage() {}
 
 	async function pingServer() {
 		if (!localState.user) {
@@ -125,6 +123,7 @@ const mod_SiteSafeAPI = () => {
 			cordova.getAppVersion.getVersionNumber().then((version) => {
 				fs.read("cachever").then((a) => {
 					if (a != version) {
+						console.log(a, version);
 						alert("removing stale cache");
 						fs.list("")
 							.then((file) => {
@@ -138,12 +137,12 @@ const mod_SiteSafeAPI = () => {
 			});
 		} else {
 			fs.list("")
-			.then((file) => {
-				fs.remove(file).then((status) => {});
-			})
-			.finally((result) => {
-				fs.write("cachever", version);
-			});
+				.then((file) => {
+					fs.remove(file).then((status) => {});
+				})
+				.finally((result) => {
+					fs.write("cachever", version);
+				});
 		}
 
 		console.log("Loading User Profile.");
@@ -158,7 +157,7 @@ const mod_SiteSafeAPI = () => {
 
 		await connectionStateChange(); //doesn't fire onDeviceReady iOS
 		//Load Saved Prefs, Or Write Defaults
-		
+
 		console.log("Loading Preferences: ");
 		console.log(await this.preferences); //Getter Does File Load
 
@@ -328,14 +327,20 @@ const mod_SiteSafeAPI = () => {
 			}, 5000);
 
 			if (SiteSafeAPI.isConnected) {
+				let thisRequest = {
+					user: localState.user,
+				};
+
+				if (SiteSafeAPI.user.auth.rules.includes("admin")) {
+					thisRequest["where"] = " ";
+				}
+
 				fetch(`${APIServerDefault}/user/list`, {
 					method: "post",
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({
-						user: localState.user,
-					}),
+					body: JSON.stringify(thisRequest),
 				})
 					.then((r) => r.json())
 					.then((list) => {
@@ -578,7 +583,6 @@ const mod_SiteSafeAPI = () => {
 
 		obj_JSON.desc = obj_JSON.desc ? obj_JSON.desc : "";
 		let subitems = obj_JSON.data ? `<div class="subItemContainer"></div>` : "";
-		console.log(obj_JSON);
 
 		switch (obj_JSON.type) {
 			case 0: {
@@ -602,15 +606,6 @@ const mod_SiteSafeAPI = () => {
 				return tItem;
 			}
 			case 1: {
-				debugger
-				//RANGE Slider
-				let vals = [
-					"Not Applicable",
-					"Acceptable",
-					"Minor Risk",
-					"Serious Risk",
-					"Immediate Danger",
-				];
 
 				return ons.createElement(`
 				<div class="controlItem">
@@ -662,14 +657,10 @@ const mod_SiteSafeAPI = () => {
 				signaturePad.maxWidth = 1.6;
 				signaturePad.penColor = "blue";
 
+				sigData = obj_JSON.value;
+				if (typeof sigData != typeof null) signaturePad.fromData(sigData);
 
-				sigData = obj_JSON.value
-
-				
-
-						signaturePad.fromData(sigData);
-
-						return s;
+				return s;
 			}
 		}
 	}
@@ -852,15 +843,21 @@ const mod_SiteSafeAPI = () => {
 
 				if (localState.connected) {
 					return new Promise(async (resolve, reject) => {
+						let thisReq = {
+							u: SiteSafeAPI.localState.user,
+							p: SiteSafeAPI.localState.provisioning,
+						};
+
+						if (SiteSafeAPI.user.auth.rules.includes("admin")) {
+							thisReq.where = `WHERE TRUE`;
+						}
+
 						fetch(APIServerDefault + "/list/documents", {
 							method: "post",
 							headers: {
 								"Content-Type": "application/json",
 							},
-							body: JSON.stringify({
-								u: SiteSafeAPI.localState.user,
-								p: SiteSafeAPI.localState.provisioning,
-							}),
+							body: JSON.stringify(thisReq),
 						})
 							.then((resp) => resp.json())
 							.then((listDocs) => {

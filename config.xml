@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget xmlns="http://www.w3.org/ns/widgets" id="ca.sixwest.sitesafe" version="1.2.42">
+<widget xmlns="http://www.w3.org/ns/widgets" id="ca.sixwest.sitesafe" version="1.2.44">
   <name>SiteSafe</name>
-  <description>Made with Monaca (http://monaca.mobi)</description>
+  <description></description>
   <author/>
   <content src="index.html"/>
   <allow-navigation href="*"/>

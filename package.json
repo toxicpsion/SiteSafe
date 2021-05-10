@@ -1,6 +1,6 @@
 {
     "name": "sixwest-sitesafe-cordova",
-    "version": "1.2.42",
+    "version": "1.2.44",
     "dependencies": {
         "cordova-custom-config": "5.1.0",
         "cordova-plugin-splashscreen": "6.0.0",

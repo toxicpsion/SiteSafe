@@ -160,10 +160,10 @@ ons-button span {
 	display: none;
 }
 
+.hasSubItems {
+	padding-left: .25em;
+}
 .controlItem {
-	display: inline-flex;
-	flex-direction: column;
-	justify-content: stretch;
 
 }
 .controlItem .subItems {
@@ -180,27 +180,20 @@ ons-button span {
 }
 
 .controlItem .itemHeader {
-	/* 	flex-basis: 100%; */
-	border-top: 1px solid darkgrey;
-	order: 0;
+	border-top: 1px dotted darkgrey;
 }
 .controlItem .itemTitle {
 	font-weight: bold;
-	font-size: small;
-	break-after: always;
 }
 .controlItem .itemDesc {
-	display: inline-flex;
-	align-self: flex-end;
 
-	font-size: small;
-	font-weight: 300;
-	order: 3;
+	font-weight: 250;
+	font-size: 70%;
 }
 .controlItem .itemResponse {
-	white-space: nowrap;
-	display: inline-flex;
 	float: right;
+	position: relative;
+	top: -1em;
 }
 .subItems .subItems .controlItem {
 	flex-grow: 1;
@@ -210,7 +203,6 @@ ons-button span {
 
 .printableDocument > .controlItem > .itemHeader {
 	font-weight: bold;
-	flex-direction: column;
 }
 
 .subItems .subItems .controlItem .itemHeader {
@@ -296,29 +288,11 @@ ons-button span {
 }
 /* FIXES FOR RANGE INPUT SCROLLING */
 
-/*
+
 input[type=range] {
   pointer-events:none;
 }
 input[type=range]::-webkit-slider-thumb {
   pointer-events:auto;
-}*/
-
-@media print {
-	* {
-		background-color: white;
-	}
-	.printableDocument {
-		position: absolute;
-		left: 0;
-		top: 0;
-		right: 0;
-		bottom: auto;
-		border: none;
-		padding: none;
-		margin: none;
-	}
-	.commandBar {
-		display: none;
-	}
 }
+

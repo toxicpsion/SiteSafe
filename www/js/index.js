@@ -699,10 +699,11 @@ let app = {
 					.querySelector(".printButton")
 					.addEventListener("click", function () {
 						let toPrint = document
-							.getElementById("p_docView")
-							.querySelector(".renderCanvas").content;
+							//.getElementById("p_docView")
+							.querySelector(".printableDocument").innerHTML;
+						toPrint = "<html>" + toPrint + "</html>";
 
-						cordova.plugins.printer.print(toPrint, { margin: false }, (res) => {
+						cordova.plugins.printer.print(toPrint, { margin: true }, (res) => {
 							console.log("Printing: " + event.target.data);
 
 							cBar.innerHTML = "";
@@ -722,62 +723,59 @@ let app = {
 				break;
 			}
 			case "p_accountPage": {
-				if (event.target.data.isFirstRun) {
-					alert(JSON.stringify(event.target.data));
-				} else {
-					document.querySelector(".topToolbar").style.visibility = "hidden";
+				document.querySelector(".topToolbar").style.visibility = "hidden";
 
-					let cBar = document.querySelector(".commandBar");
-					cBar.innerHTML = "";
+				let cBar = document.querySelector(".commandBar");
+				cBar.innerHTML = "";
 
-					cBar.appendChild(
-						ons.createElement(
-							`<ons-button class="cancelButton" icon="back">&nbsp;Close</ons-button>`
-						)
-					);
-					cBar.appendChild(
-						ons.createElement(
-							`<ons-button class="editButton" icon="edit">&nbsp;Edit</ons-button>`
-						)
-					);
-					cBar
-						.querySelector(".cancelButton")
-						.addEventListener("click", function () {
-							cBar.style.visibility = "hidden";
-							cBar.innerHTML = "";
-							document.querySelector(".topToolbar").style.visibility =
-								"visible";
-							rootNavigator.popPage();
-						});
-
-					cBar.querySelector(".editButton").addEventListener("click", () => {
-						debugger;
-						let t = UTIL.cloneObject(SiteSafeAPI.user);
-						SiteSafeAPI.provisioning.then((provis) => {
-							t.provisioning = provis;
-							app
-								.parsedDialogForm(
-									`${SiteSafeAPI.APIServerDefault}/confirmAccount.html`,
-									t
-								)
-								.then(() => {
-									cBar.style.visibility = "hidden";
-									cBar.innerHTML = "";
-									document.querySelector(".topToolbar").style.visibility =
-										"visible";
-									rootNavigator.popPage();
-								})
-								.catch(() => {
-									alert("catch?!!");
-								});
-						});
+				cBar.appendChild(
+					ons.createElement(
+						`<ons-button class="cancelButton" icon="back">&nbsp;Close</ons-button>`
+					)
+				);
+				cBar.appendChild(
+					ons.createElement(
+						`<ons-button class="editButton" icon="edit">&nbsp;Edit</ons-button>`
+					)
+				);
+				cBar
+					.querySelector(".cancelButton")
+					.addEventListener("click", function () {
+						cBar.style.visibility = "hidden";
+						cBar.innerHTML = "";
+						document.querySelector(".topToolbar").style.visibility = "visible";
+						rootNavigator.popPage();
 					});
-					cBar.style.visibility = "visible";
 
-					//let page = document.getElementById("p_accountPage");
-					let canvas = document.querySelector("#p_accountPage .renderCanvas");
+				cBar.querySelector(".editButton").addEventListener("click", () => {
+					debugger;
+					let t = UTIL.cloneObject(SiteSafeAPI.user);
+					SiteSafeAPI.provisioning.then((provis) => {
+						t.provisioning = provis;
+						app
+							.parsedDialogForm(
+								`${SiteSafeAPI.APIServerDefault}/confirmAccount.html`,
+								t
+							)
+							.then(() => {
+								cBar.style.visibility = "hidden";
+								cBar.innerHTML = "";
+								document.querySelector(".topToolbar").style.visibility =
+									"visible";
+								rootNavigator.popPage();
+							})
+							.catch(() => {
+								//clicked Cancel?
+								//alert("catch?!!");
+							});
+					});
+				});
+				cBar.style.visibility = "visible";
 
-					canvas.innerHTML = `
+				//let page = document.getElementById("p_accountPage");
+				let canvas = document.querySelector("#p_accountPage .renderCanvas");
+
+				canvas.innerHTML = `
 			<img class="userImage"><br>
 			<div>
 				<div class="username">${SiteSafeAPI.user.name}</div>
@@ -788,12 +786,29 @@ let app = {
 			<div>Notes:<br>${SiteSafeAPI.user.notes}</div>
 			<div style="padding-top: 2em"> 
 				<ons-button class="logoutButton" icon="times">&nbsp;Logout</ons-button>
+				${
+					SiteSafeAPI.user.auth.rules.includes("admin")
+						? `<ons-button icon="new" class="btnCreateUser">&nbsp;Create User</ons-button>`
+						: ""
+				}
 			</div>
 			`;
-					canvas
-						.querySelector(".logoutButton")
-						.addEventListener("click", SiteSafeAPI.doLogout);
-				}
+				canvas
+					.querySelector(".logoutButton")
+					.addEventListener("click", SiteSafeAPI.doLogout);
+				try {
+					if (SiteSafeAPI.user.auth.rules.includes("admin")) {
+						canvas
+							.querySelector(".btnCreateUser")
+							.addEventListener("click", () => {
+								app.parsedDialogForm(
+									`${SiteSafeAPI.APIServerDefault}/createUser.html`,
+									t
+								);
+							});
+					}
+				} catch {}
+
 				break;
 			}
 			case "p_documents": {
@@ -1675,7 +1690,7 @@ let app = {
 		if (!template) {
 			alert("template Error in document");
 		}
-
+debugger
 		cv.innerHTML = `
 							<img class="headerIcon">
 								<div class="titleBlock">
@@ -1693,7 +1708,6 @@ let app = {
 		console.log(template);
 
 		template.data.forEach(function (i) {
-	
 			//Map Response Values
 			i.value = thisDoc.data[i.id];
 			if (i.data) {
@@ -1701,7 +1715,13 @@ let app = {
 					si.value = thisDoc.data[si.id];
 				});
 			}
+
 			let thisItem = SiteSafeAPI.getPrintableControlFromJSON(i);
+			if (i.pageBreak) {
+				cv.appendChild(
+					ons.createElement("<p style='page-break-before: always'></p>")
+				);
+			}
 			cv.appendChild(thisItem);
 		});
 

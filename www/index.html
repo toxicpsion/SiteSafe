@@ -23,6 +23,8 @@
 		<script src="js/signature_pad.min.js"></script>
 		<script src="js/signature_pad.tweaks.js"></script>
 
+		<script src="js/qrcode.min.js"></script>
+
 		<script src="js/SiteSafeAPI.js"></script>
 
 		<script src="lib/onsenui/js/onsenui.min.js"></script>
@@ -101,8 +103,8 @@
 					</ons-tab>
 					<ons-tab label="Reference" page="tpl_refList" icon="book">
 					</ons-tab>
-					<ons-tab label="Settings" page="tpl_settings" icon="gear">
-					</ons-tab>
+				<!--	<ons-tab label="Settings" page="tpl_settings" icon="gear">
+					</ons-tab> -->
 				</ons-tabbar>
 			</ons-page>
 		</template>
@@ -113,7 +115,8 @@
 				<div class="pageTitleBar">
 					Reference
 				</div>
-				<ons-list id="l_reference"> </ons-list>
+				<div id="refcontent"></div>
+				<ons-list id="l_reference"></ons-list>
 			</ons-page>
 		</template>
 
@@ -139,12 +142,6 @@
 			</ons-page>
 		</template>
 
-		<template id="tpl_docView">
-			<ons-page id="p_docView">
-				<div class="renderCanvas"></div>
-			</ons-page>
-		</template>
-		
 		<template id="tpl_refRender">
 			<ons-page id="p_refRender">
 				<div class="renderCanvas"></div>

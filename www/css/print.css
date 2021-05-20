@@ -1,0 +1,298 @@
+/*ONSEN SETUP*/
+html,
+body {
+	width: 100%;
+	height: 100%;
+}
+
+.dialog_title {
+	display: flex;
+	width: 80%;
+	justify-content: space-between;
+}
+
+.tabbar__badge.notification {
+	background-color: transparent;
+	color: white;
+}
+
+.forceScrollBar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.pageTitleBar {
+	height: 1em;
+	padding: 0.3em;
+	font-size: small;
+	font-variant: small-caps;
+	text-align: center;
+	background-color: lightgrey;
+	border-bottom: 1px solid darkgrey;
+}
+.commandBar {
+	animation: fade 2s ease-in-out;
+
+	display: flex;
+	position: fixed;
+	z-index: 10;
+	background-color: rgba(0, 0, 0, 0.6);
+	padding: 0.5em;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	border-top: 1px solid lightgrey;
+
+	justify-content: space-between;
+	visibility: hidden;
+
+	/*	display: none;*/
+}
+.commandBar .printButton {
+	margin-right: 20px;
+}
+.commandBar .saveButton {
+	/*	margin-right: 20px;*/
+	background-color: rgba(30, 250, 30, 0.9);
+}
+.commandBar .saveButton.disabled {
+	background-color: rgba(180, 180, 180, 0.9);
+	pointer-events: none;
+}
+.commandBar .abortButton {
+	background-color: rgba(255, 100, 100, 0.9);
+	margin-right: 20px;
+}
+.alert-dialog-title {
+	text-align: center;
+}
+.alert-dialog .isdisabled {
+	color: rgba(180, 180, 180, 0.9);
+	pointer-events: none;
+}
+
+.documentListItem .center {
+	overflow-x: clip;
+}
+.documentListItem .controlArea {
+	position: absolute;
+	right: 0.25em;
+}
+.documentListItem .controlArea .addButton.altState {
+	background-color: rgba(180, 180, 180, 0.9);
+}
+.documentListItem .controlArea .assignButton {
+	background-color: rgba(30, 180, 30, 0.9);
+}
+.documentListItem .controlArea .deleteButton {
+	background-color: rgba(255, 100, 100, 0.9);
+}
+
+.printableDocument {
+	margin: 0.5em;
+	display: flex;
+	flex-direction: column;
+	padding: 0.5em;
+	border: 1px solid black;
+	background-color: white;
+	font-size: 80%;
+}
+
+.printableDocument .titleBlock {
+	display: inline-flex;
+	justify-content: space-between;
+	font-weight: bold;
+	border-bottom: 1px dotted lightgrey;
+	vertical-align: text-top;
+}
+.printableDocument .headerIcon {
+	src: "/logo.png";
+}
+.printableDocument .subtitleBlock {
+	display: flex;
+	justify-content: space-between;
+	font-weight: bold;
+
+	vertical-align: text-top;
+}
+
+.jobControls {
+	display: flex;
+	width: fit-content;
+	flex-wrap: nowrap;
+	float: left;
+	padding-right: 0.25em;
+}
+
+.alert-dialog-content {
+	text-align: left;
+	max-height: 60vh;
+	overflow-y: scroll;
+}
+
+#p_accountPage .username {
+	font-size: x-large;
+}
+
+#p_accountPage .renderCanvas {
+	text-align: center;
+}
+
+#p_accountPage .userImage {
+	content: url("../images/240px-Gnome-stock_person.png");
+	width: 60%;
+	padding-top: 10%;
+}
+
+/*Item Styling*/
+ons-button span {
+	/*fix for button icon spacing*/
+	padding-left: 1em;
+}
+#d_actionStrip {
+	position: relative;
+	top: 1em;
+	margin: auto;
+	display: flex;
+	justify-content: space-evenly;
+}
+.genericListItem .list-item__subtitle {
+	display: none;
+}
+
+.hasSubItems {
+	padding-left: .25em;
+}
+.controlItem {
+
+}
+.controlItem .subItems {
+	margin-left: 2em;
+	flex-wrap: wrap;
+	display: inline-flex;
+	flex-direction: row;
+	justify-content: left;
+	margin: auto;
+}
+.controlItem .ctlCheckBox {
+	display: inline-flex;
+	flex-wrap: nowrap;
+}
+
+.controlItem .itemHeader {
+	border-top: 1px dotted darkgrey;
+}
+.controlItem .itemTitle {
+	font-weight: bold;
+}
+.controlItem .itemDesc {
+
+	font-weight: 250;
+	font-size: 70%;
+}
+.controlItem .itemResponse {
+	float: right;
+	position: relative;
+	top: -1em;
+}
+.subItems .subItems .controlItem {
+	flex-grow: 1;
+	flex-basis: 40%;
+	justify-content: flex-start;
+}
+
+.printableDocument > .controlItem > .itemHeader {
+	font-weight: bold;
+}
+
+.subItems .subItems .controlItem .itemHeader {
+	color: red;
+	flex-grow: 1;
+	flex-basis: 100%;
+	border: none;
+}
+.ctlCheckBox {
+	display: inline-flex;
+	flex-wrap: nowrap;
+}
+
+.ctlCheckBox ons-icon {
+	padding-inline-start: 1em;
+}
+
+.signatureBox {
+	padding: 2px;
+	border: 2px solid darkgray;
+	width: 80%;
+}
+.printableDocument .signatureBox {
+	padding: 2px;
+	border: 2px solid darkgray;
+	width: 200px;
+	height: 50px;
+}
+
+.toolbarIcon {
+	content: url("../bar_logo.png");
+	height: auto;
+	display: inline-block;
+	position: absolute;
+	top: 0.2em;
+	bottom: 0.2em;
+	margin: 0.5em;
+}
+.toolbarUserName {
+	padding-right: 0.2em;
+	padding-left: 0.2em;
+	/* border: 1px dotted grey;*/
+	background-color: #eeeeee;
+	border-radius: 0.4em;
+	position: absolute;
+	margin: 0.5em;
+	right: 0.1em;
+	font-weight: 400;
+	bottom: 0em;
+
+	font-variant: small-caps;
+	font-size: medium;
+	text-overflow: clip;
+}
+.toolbarUserIcon {
+	position: relative;
+	margin: 0em;
+	right: 0em;
+	bottom: -3px;
+
+	content: url("../images/240px-Gnome-stock_person.png");
+	width: 2em;
+	height: 2em;
+}
+
+.hasInteracted {
+	/* background-color: #3ae13a; */
+}
+
+.invalidated {
+	background-color: #ffeeee;
+	border: 1px dotted #ffdddd;
+}
+.range {
+	width: 100%;
+}
+.lModalMessage {
+	transition: visible 1s linear;
+}
+.userIsSelected {
+	background-color: lightgreen;
+	border: 1px dotted green;
+}
+/* FIXES FOR RANGE INPUT SCROLLING */
+
+
+input[type=range] {
+  pointer-events:none;
+}
+input[type=range]::-webkit-slider-thumb {
+  pointer-events:auto;
+}
+

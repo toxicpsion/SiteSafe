@@ -579,8 +579,7 @@ const mod_SiteSafeAPI = () => {
 		return thisElement;
 	}
 
-	function getPrintableControlFromJSON(obj_JSON) {
-
+	function  getPrintableControlFromJSON(obj_JSON) {
 		obj_JSON.desc = obj_JSON.desc ? obj_JSON.desc : "";
 		let subitems = obj_JSON.data ? `<div class="subItemContainer"></div>` : "";
 
@@ -606,7 +605,6 @@ const mod_SiteSafeAPI = () => {
 				return tItem;
 			}
 			case 1: {
-
 				return ons.createElement(`
 				<div class="controlItem">
 					<div class="itemHeader">${obj_JSON.text}</div>
@@ -648,6 +646,7 @@ const mod_SiteSafeAPI = () => {
 			case 6: {
 				debugger;
 				//signature
+
 				let s = ons.createElement(` 
 				<canvas class="signatureBox"></canvas>`);
 				let signaturePad = new SignaturePad(s);
@@ -658,7 +657,15 @@ const mod_SiteSafeAPI = () => {
 				signaturePad.penColor = "blue";
 
 				sigData = obj_JSON.value;
-				if (typeof sigData != typeof null) signaturePad.fromData(sigData);
+				console.error(typeof sigData)
+				if (typeof sigData == "object" && sigData != null) {
+					signaturePad.fromData(sigData);
+					console.log(">>",sigData);
+					sigData.forEach((sig) => {
+						console.warn(sig)
+						//signaturePad.fromData(sig);
+					});
+				}
 
 				return s;
 			}

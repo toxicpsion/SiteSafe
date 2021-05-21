@@ -1,6 +1,6 @@
 {
     "name": "sixwest-sitesafe-cordova",
-    "version": "1.2.44",
+    "version": "1.2.47",
     "dependencies": {
         "cordova-custom-config": "5.1.0",
         "cordova-plugin-splashscreen": "6.0.0",
@@ -46,7 +46,6 @@
         "dev": "browser-sync start -s www/ --watch --port 8080 --ui-port 8081"
     },
     "devDependencies": {
-        "browser-sync": "^2.26.7",
         "cordova": "^10.0.0",
         "cordova-android": "^9.1.0",
         "cordova-plugin-androidx-adapter": "^1.1.3",

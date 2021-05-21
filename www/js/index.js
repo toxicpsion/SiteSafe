@@ -7,6 +7,8 @@ modal,
 FCM
 */
 
+
+
 //Included Modules I Use:
 
 //CordovaPromiseFS: MIT Licence - https://github.com/markmarijnissen/cordova-promise-fs
@@ -16,6 +18,7 @@ FCM
 // eslint-disable-next-line no-unused-vars
 let rootNavigator;
 let SiteSafeAPI = mod_SiteSafeAPI();
+let inAppBrowserHandle
 
 function htmlSubmit(document, e) {
 	var thisRequest = {};
@@ -553,7 +556,6 @@ let app = {
 				break;
 			}
 			case "p_reference": {
-				
 				app.updateReferenceList();
 				break;
 			}
@@ -1030,9 +1032,78 @@ let app = {
 				b_manageDocs.addEventListener(
 					"click",
 					() => {
-						cordova.InAppBrowser.open("https://sitesafe.6west.ca/resource/test.txt","_blank","location=yes")
-						
-			
+						inAppBrowserHandle = cordova.InAppBrowser.open(
+							"http://sitesafe.6west.ca/resource/test?testing=moartest",
+							"_blank",
+							"location=yes,hidden=yes,beforeload=yes"
+						);
+
+						inAppBrowserHandle.addEventListener("loadstart", () => {
+							modal.show("Loading...");
+						});
+						inAppBrowserHandle.addEventListener("loadstop", () => {
+							if (inAppBrowserHandle != undefined) {
+								inAppBrowserHandle.insertCSS({
+									code: "body{font-size: 25px;}",
+								});
+
+								inAppBrowserHandle.executeScript({
+									code: "\
+									var somevar='TESTTEST';\
+										var message = 'this is the message';\
+										var messageObj = {my_message: message};\
+										var stringifiedMessageObj = JSON.stringify(messageObj);\
+										webkit.messageHandlers.cordova_iab.postMessage(stringifiedMessageObj);",
+								});
+
+								inAppBrowserHandle.show();
+								modal.hide();
+							}
+						});
+
+						inAppBrowserHandle.addEventListener("loaderror", (params) => {
+							modal.hide();
+
+							var scriptErrorMesssage =
+								"alert('Sorry we cannot open that page. Message from the server is : " +
+								params.message +
+								"');";
+
+							inAppBrowserHandle.executeScript(
+								{ code: scriptErrorMesssage },
+								(params) => {
+									if (params[0] == null) {
+										modal.show(
+											"Sorry we couldn't open that page. Message from the server is : '" +
+												params.message +
+												"'"
+										);
+									}
+								}
+							);
+
+							inAppBrowserHandle.close();
+
+							inAppBrowserHandle = undefined;
+						});
+
+						inAppBrowserHandle.addEventListener(
+							"beforeload",
+							(params, callback) => {
+				
+								if (params.url.startsWith("https://sitesafe.6west.ca/")) {
+									// Load this URL in the inAppBrowser.
+									callback(params.url);
+								} else {
+									// The callback is not invoked, so the page will not be loaded.
+									alert("This browser only opens pages on http://*");
+								}
+							}
+						);
+
+						inAppBrowserHandle.addEventListener("message",(message) => {
+							ons.notification.toast(message.data.my_message, {timeout:2000})
+						});
 					},
 					false
 				);

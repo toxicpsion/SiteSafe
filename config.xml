@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget xmlns="http://www.w3.org/ns/widgets" id="ca.sixwest.sitesafe" version="1.2.47">
+<widget xmlns="http://www.w3.org/ns/widgets" id="ca.sixwest.sitesafe" version="1.2.48">
   <name>SiteSafe</name>
-  <description></description>
+  <description/>
   <author/>
   <content src="index.html"/>
   <allow-navigation href="*"/>
@@ -27,7 +27,6 @@
   </feature>
   <platform name="ios">
     <preference name="orientation" value="portrait"/>
-    <splash src="/res/ios/screen/Default@2x~universal~anyany.png"/>
     <icon src="/res/ios/icon/icon.png" width="57" height="57"/>
     <icon src="/res/ios/icon/icon@2x.png" width="114" height="114"/>
     <icon src="/res/ios/icon/icon-72.png" width="72" height="72"/>
@@ -47,13 +46,14 @@
     <icon src="/res/ios/icon/icon-83.5@2x~ipad.png" width="167" height="167"/>
     <icon src="/res/ios/icon/icon-1024.png" width="1024" height="1024"/>
     <splash src="/res/ios/screen/Default@2x~universal~anyany.png"/>
+    <preference name="scheme" value="monaca-app"/>
+    <preference name="hostname" value="localhost"/>
+    <splash src="/res/ios/screen/Default@2x~universal~anyany.png"/>
     <config-file platform="ios" parent="CFBundleLocalizations" target="*-Info.plist">
       <array>
         <string>en</string>
       </array>
     </config-file>
-    <preference name="scheme" value="monaca-app"/>
-    <preference name="hostname" value="localhost"/>
   </platform>
   <platform name="android">
     <icon src="/res/android/icon/ldpi.png" density="ldpi"/>
@@ -70,24 +70,25 @@
     <splash src="/res/android/screen/splash-port-xxxhdpi.9.png" density="port-xxxhdpi"/>
     <splash src="/res/android/screen/splash-mdpi.png" density="mdpi"/>
     <preference name="compileSdkVersion" value="29"/>
+    <preference name="AndroidXEnabled" value="true"/>
   </platform>
   <preference name="AndroidExtraFilesystems" value="assets"/>
   <preference name="iosExtraFilesystems" value="bundle"/>
   <resource-file src="android-icon.png"/>
   <preference name="WindowsStorePublisherName" value="My Name"/>
   <preference name="WindowsStoreIdentityName" value="dd1b5f57-f121-d497-ce96-04d5c745aed5"/>
+  <preference name="SplashScreenBackgroundColor" value="#464646"/>
+  <preference name="MediaTypesRequiringUserActionForPlayback" value="false"/>
   <preference name="KeepRunning" value="true"/>
   <preference name="monaca:AndroidIsPackageNameSeparate" value="true"/>
   <preference name="Orientation" value="portrait"/>
   <preference name="SplashScreenDelay" value="1000"/>
   <preference name="Fullscreen" value="false"/>
-  <preference name="SplashScreenBackgroundColor" value="#464646"/>
+  <preference name="target-device" value="handset"/>
   <preference name="AutoHideSplashScreen" value="true"/>
   <preference name="FadeSplashScreen" value="true"/>
   <preference name="ShowSplashScreenSpinner" value="false"/>
   <access origin="*"/>
   <preference name="DisallowOverscroll" value="true"/>
   <preference name="EnableViewportScale" value="false"/>
-  <preference name="MediaTypesRequiringUserActionForPlayback" value="false"/>
-  <preference name="target-device" value="handset"/>
 </widget>

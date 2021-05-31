@@ -1033,7 +1033,7 @@ let app = {
 					"click",
 					() => {
 						inAppBrowserHandle = cordova.InAppBrowser.open(
-							"http://sitesafe.6west.ca/resource/test?testing=moartest",
+							"http://sitesafe.6west.ca/resource/test",
 							"_blank",
 							"location=yes,hidden=yes,beforeload=yes"
 						);

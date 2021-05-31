@@ -1,0 +1,36 @@
+<input type="hidden" name="dialog_action" value="!/user/update">
+<input type="hidden" name="#request:@data:db" value="credentials">
+<input type="hidden" name="#request:@data:table" value="credentials">
+<input type="hidden" name="#request:@data:columns" value='name#username#phone#@auth#@reserved#passhash#notes#session'>
+
+<div style="display:none;" class="dialog_title">Account Completion</div>
+
+<div style="display:none;" class="dialog_actionButton">
+	💾&nbsp;Save
+</div>
+
+<input type="hidden" name="#request:@reserved:completedFirstRun" value="true">
+<input type="hidden" name="#request:session" value="%session%">
+<input type="hidden" name="#request:username" value="%username%">
+<input type="hidden" name="#request:notes" value="%notes%">
+<input type="hidden" name="#request:@auth:rules" value="create assign">
+
+
+<div style="font-size: small; display:flex; flex-direction: column; justify-content: space-around;">
+<p>The account '<strong>%username%</strong>' has been created via <strong>%provisioning.providerName%</strong>,
+<br> please choose a password to complete your registration.</p>
+
+<p><ons-input type="text" name="#request:name" modifier="underbar" placeholder="Name" value="%name%" float></ons-input></p>
+<p><ons-input type="phone" name="#request:phone" modifier="underbar" placeholder="Phone" value="%phone%" float></ons-input>	</p>
+
+<p><ons-input type="password" name="password" modifier="underbar" placeholder="Password" float></ons-input></p>
+	
+<p><ons-input type="password" name="password" modifier="underbar" placeholder="Confirm" float></ons-input></p>
+
+
+<!-- 
+<input type="hidden" name="#request:passhash" value="$(document.getElementById('f_password').value == document.getElementById('f_passwordconfirm').value) ? hex_sha1(document.getElementById('f_password').value) : ''">
+
+-->
+</div>
+

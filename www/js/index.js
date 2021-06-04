@@ -7,8 +7,6 @@ modal,
 FCM
 */
 
-
-
 //Included Modules I Use:
 
 //CordovaPromiseFS: MIT Licence - https://github.com/markmarijnissen/cordova-promise-fs
@@ -18,7 +16,7 @@ FCM
 // eslint-disable-next-line no-unused-vars
 let rootNavigator;
 let SiteSafeAPI = mod_SiteSafeAPI();
-let inAppBrowserHandle
+let inAppBrowserHandle;
 
 function htmlSubmit(document, e) {
 	var thisRequest = {};
@@ -435,6 +433,8 @@ let app = {
 				cBar
 					.querySelector(".printButton")
 					.addEventListener("click", function () {
+						console.log(event.target.data);
+
 						let toPrint = document
 							//.getElementById("p_docView")
 							.querySelector(".printableDocument").innerHTML;
@@ -442,6 +442,7 @@ let app = {
 							"<html><body><link rel='stylesheet' href='css/style.css' />" +
 							toPrint +
 							"</body></html>";
+
 
 						cordova.plugins.printer.print(toPrint, { margin: true }, (res) => {
 							console.log("Printing: " + event.target.data);
@@ -606,7 +607,10 @@ let app = {
 
 						//Default Form Validator
 						let thisValidator = function (response, templateItem) {
-							console.log(response);
+							debugger;
+							console.log("item: ", templateItem)
+							console.log("resp: ", response);
+							console.log("---");
 							switch (response.type) {
 								case "text":
 								case "textarea": {
@@ -654,8 +658,10 @@ let app = {
 								template.validator
 							);
 						}
+						console.log("Validating");
 
 						responses.forEach((response) => {
+							debugger;
 							let thisResp;
 							let thisData = template.data.find(function (e) {
 								return e.id == response.id.substr(6) ? true : false;
@@ -757,6 +763,11 @@ let app = {
 									.catch((e) => {
 										alert("put failed");
 									});
+
+									if (urgentAlert) {
+										alert("Uregent Alert.");
+										debugger;
+									}
 							} else {
 								console.log(
 									"creating Leaf Node for " + event.target.data.parentID
@@ -818,7 +829,9 @@ let app = {
 									(e) => app.notify("Save Failed: " + e)
 								); */
 							}
-						} else {
+
+
+						} else { // Failed Validation
 							ons.notification.alert("Requred Fields Missing.");
 						}
 						//alert(JSON.stringify(responses));
@@ -862,6 +875,8 @@ let app = {
 				cBar
 					.querySelector(".printButton")
 					.addEventListener("click", function () {
+						console.log(event.target.data);
+
 						let toPrint = document
 							.getElementById("p_docView")
 							.querySelector(".renderCanvas").content;
@@ -1090,7 +1105,6 @@ let app = {
 						inAppBrowserHandle.addEventListener(
 							"beforeload",
 							(params, callback) => {
-				
 								if (params.url.startsWith("https://sitesafe.6west.ca/")) {
 									// Load this URL in the inAppBrowser.
 									callback(params.url);
@@ -1101,8 +1115,10 @@ let app = {
 							}
 						);
 
-						inAppBrowserHandle.addEventListener("message",(message) => {
-							ons.notification.toast(message.data.my_message, {timeout:2000})
+						inAppBrowserHandle.addEventListener("message", (message) => {
+							ons.notification.toast(message.data.my_message, {
+								timeout: 2000,
+							});
 						});
 					},
 					false
@@ -1207,7 +1223,9 @@ let app = {
 										for (const k in tpl) {
 											if (Object.hasOwnProperty.call(tpl, k)) {
 												const t = tpl[k];
-												if (t.id.length > 4) {
+
+												//Add Template visibility Validation Here.
+												if (t.id.length > 4 && t.enabled) {
 													actionbuttons.push(
 														JSON.parse(
 															`{ "label": "${t.meta.title}", "id": "${t.id}" }`

@@ -396,7 +396,6 @@ const mod_SiteSafeAPI = () => {
 			subControlElement.classList.add("subGroupContainer");
 
 			subControlElement.addEventListener("touchend", function () {
-				console.warn(this);
 				this.classList.add("hasInteracted");
 			});
 
@@ -438,7 +437,7 @@ const mod_SiteSafeAPI = () => {
 				);
 
 				let thisControl = ons.createElement(`
-				<div style="text-align:right;">
+				<div style="text-align:right; width: 80vw; left: 10vw">
 					<div style="position: relative; bottom: 0px;" class="thisValue" id="fResp_${obj_JSON.id}">&nbsp;</div>						
 					
 					<ons-range  input-id="ibp_${obj_JSON.id}" value="0" max="5" min="1"></ons-range>	
@@ -450,6 +449,7 @@ const mod_SiteSafeAPI = () => {
 						<div>Not Applicable</div><div></div><div></div><div></div><div>Immediate Danger</div>
 					</div>
 				</div>`);
+
 				thisControl.querySelector("ons-range").addEventListener(
 					"input",
 					(e) => {
@@ -545,7 +545,7 @@ const mod_SiteSafeAPI = () => {
 				addSig.addEventListener("click", function (e) {
 					signaturePad.off();
 
-					newSig = sixWestPromiseAPI.getFillableControlFromJSON({
+					newSig = SiteSafeAPI.getFillableControlFromJSON({
 						id: `signature_${
 							document.querySelectorAll(".signatureBox").length
 						}`,
@@ -810,7 +810,7 @@ const mod_SiteSafeAPI = () => {
 								provisioning: localState.provisioning,
 							}),
 						})
-							.then((resp) => resp.json())
+							.then((resp) => { console.log(resp); return resp.json()})
 							.then((templateList) => {
 								templateList.forEach((i) => {
 									i.data = JSON.parse(i.data);
@@ -856,7 +856,7 @@ const mod_SiteSafeAPI = () => {
 						};
 
 						if (SiteSafeAPI.user.auth.rules.includes("admin")) {
-							thisReq.where = `WHERE TRUE`;
+							//thisReq.where = `WHERE TRUE`;
 						}
 
 						fetch(APIServerDefault + "/list/documents", {

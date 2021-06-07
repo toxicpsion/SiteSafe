@@ -166,6 +166,27 @@ ons-button span {
 .controlItem {
 
 }
+.controlItem .Button5 {
+	display :flex ;
+	flex-direction: column;
+
+	/*flex-wrap: nowrap;*/
+
+}
+
+.Button5 ons-button {
+	align-content: center;
+	align-items: center;
+	
+	display: inline-flex;
+	font-size: xx-small;
+	text-align: center;
+}
+.Button5 .selected {
+	color: black;
+	background-color: darkgray;
+	
+}
 .controlItem .subItems {
 	margin-left: 2em;
 	flex-wrap: wrap;
@@ -285,6 +306,12 @@ ons-button span {
 .userIsSelected {
 	background-color: lightgreen;
 	border: 1px dotted green;
+}
+.hidden {
+	display: none;
+}
+.hidden * {
+		display: none;
 }
 /* FIXES FOR RANGE INPUT SCROLLING */
 

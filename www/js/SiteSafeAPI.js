@@ -420,6 +420,7 @@ const mod_SiteSafeAPI = () => {
 						`<div class="itemHeader">
 						<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
 						<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
+		
 						</div>`
 					)
 				);
@@ -428,44 +429,34 @@ const mod_SiteSafeAPI = () => {
 			//Range Slider
 			case 1: {
 				thisElement.appendChild(
-					ons.createElement(
-						`<div class="itemHeader">
-						<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
-						<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
-						</div>`
-					)
+					ons.createElement(`<div class="itemHeader">
+					<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
+					<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
+					</div>`)
 				);
 
-				let thisControl = ons.createElement(`
-				<div style="text-align:right; width: 80vw; left: 10vw">
-					<div style="position: relative; bottom: 0px;" class="thisValue" id="fResp_${obj_JSON.id}">&nbsp;</div>						
-					
-					<ons-range  input-id="ibp_${obj_JSON.id}" value="0" max="5" min="1"></ons-range>	
-						
-					<div style="width: 100%; display: flex; justify-content: space-between; flex-grow: 1;font-size: xx-small;">
-						<div>|</div><div>|</div><div>|</div><div>|</div><div>|</div>
-					</div>
-					<div style="width: 100%; display: flex; justify-content: space-between; flex-grow: 1; font-size: xx-small;">
-						<div>Not Applicable</div><div></div><div></div><div></div><div>Immediate Danger</div>
-					</div>
+				let thisControl = ons.createElement(`				<div class="Button5">
+				<div style="display:none" class="thisValue" id="fResp_${obj_JSON.id}">&nbsp;</div>	
+
+				<ons-button modifier="quiet">N/A</ons-button>
+				<ons-button modifier="quiet">Acceptable</ons-button>
+				<ons-button modifier="quiet">Minor Risk</ons-button>
+				<ons-button modifier="quiet">Serious Risk</ons-button>
+				<ons-button modifier="quiet">Immediate Danger</ons-button>
 				</div>`);
 
-				thisControl.querySelector("ons-range").addEventListener(
-					"input",
-					(e) => {
-						vals = [
-							"Not Applicable",
-							"Acceptable",
-							"Minor Risk",
-							"Serious Risk",
-							"Immediate Danger",
-						];
-						thisControl.querySelector(".thisValue").innerHTML =
-							vals[e.target.value - 1];
-					},
-					{ passive: true }
-				);
+				thisControl.querySelectorAll("ons-button").forEach((b) => {
+					b.addEventListener("click", (e) => {
+						thisControl.querySelectorAll("ons-button").forEach((btn) => {
+							btn.classList.remove("selected");
+						});
+						e.target.classList.add("selected");
+						thisControl.querySelector(".thisValue").innerHTML = e.target.innerText
+					});
+				});
+
 				thisElement.appendChild(thisControl);
+
 				break;
 			}
 			//CheckBox
@@ -579,7 +570,7 @@ const mod_SiteSafeAPI = () => {
 		return thisElement;
 	}
 
-	function  getPrintableControlFromJSON(obj_JSON) {
+	function getPrintableControlFromJSON(obj_JSON) {
 		obj_JSON.desc = obj_JSON.desc ? obj_JSON.desc : "";
 		let subitems = obj_JSON.data ? `<div class="subItemContainer"></div>` : "";
 
@@ -657,12 +648,12 @@ const mod_SiteSafeAPI = () => {
 				signaturePad.penColor = "blue";
 
 				sigData = obj_JSON.value;
-				console.error(typeof sigData)
+				console.error(typeof sigData);
 				if (typeof sigData == "object" && sigData != null) {
 					signaturePad.fromData(sigData);
-					console.log(">>",sigData);
+					console.log(">>", sigData);
 					sigData.forEach((sig) => {
-						console.warn(sig)
+						console.warn(sig);
 						//signaturePad.fromData(sig);
 					});
 				}
@@ -810,7 +801,10 @@ const mod_SiteSafeAPI = () => {
 								provisioning: localState.provisioning,
 							}),
 						})
-							.then((resp) => { console.log(resp); return resp.json()})
+							.then((resp) => {
+								console.log(resp);
+								return resp.json();
+							})
 							.then((templateList) => {
 								templateList.forEach((i) => {
 									i.data = JSON.parse(i.data);

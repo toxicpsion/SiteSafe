@@ -443,7 +443,6 @@ let app = {
 							toPrint +
 							"</body></html>";
 
-
 						cordova.plugins.printer.print(toPrint, { margin: true }, (res) => {
 							console.log("Printing: " + event.target.data);
 
@@ -608,8 +607,9 @@ let app = {
 						//Default Form Validator
 						let thisValidator = function (response, templateItem) {
 							debugger;
-							console.log("item: ", templateItem)
+							console.log("item: ", templateItem);
 							console.log("resp: ", response);
+							console.log("rt", response.type);
 							console.log("---");
 							switch (response.type) {
 								case "text":
@@ -640,6 +640,7 @@ let app = {
 								default: {
 									if (response.className == "thisValue") {
 										if (response.innerHTML.trim() == "&nbsp;") {
+											response.parentNode.classList.add("invalidated");
 											return false;
 										}
 									}
@@ -764,10 +765,10 @@ let app = {
 										alert("put failed");
 									});
 
-									if (urgentAlert) {
-										alert("Uregent Alert.");
-										debugger;
-									}
+								if (urgentAlert) {
+									alert("Urgent Alert.");
+									debugger;
+								}
 							} else {
 								console.log(
 									"creating Leaf Node for " + event.target.data.parentID
@@ -829,9 +830,8 @@ let app = {
 									(e) => app.notify("Save Failed: " + e)
 								); */
 							}
-
-
-						} else { // Failed Validation
+						} else {
+							// Failed Validation
 							ons.notification.alert("Requred Fields Missing.");
 						}
 						//alert(JSON.stringify(responses));
@@ -1157,7 +1157,6 @@ let app = {
 
 					d.toplevel.forEach((toplevelDocID) => {
 						if (document.getElementById(toplevelDocID)) return; //Skip Dupes
-
 						let tDoc = UTIL.cloneObject(localDocs[toplevelDocID]);
 
 						tDoc.createdTimeLocalString = new Date(
@@ -1345,6 +1344,21 @@ let app = {
 						thisJob.querySelector(
 							".list-item__subtitle"
 						).innerHTML = `${tDoc.meta.subtitle}`;
+
+						if (SiteSafeAPI.user.auth.rules.includes("admin")) {
+						} else {
+							if (!tDoc.auth.includes(SiteSafeAPI.user.username)) {
+								try {
+									thisListItem.classList.add("hidden");
+								} catch {}
+							}
+
+							if(tDoc.status !=0) {
+								try {
+									thisListItem.classList.add("hidden");
+								} catch {}
+							}
+						}
 
 						docList.appendChild(thisJob);
 					});

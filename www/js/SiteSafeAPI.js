@@ -281,11 +281,16 @@ const mod_SiteSafeAPI = () => {
 	}
 
 	function doLogout() {
+		modal.show("Logging out...")
 		fs.remove("userProfile").then((e) => {
-			fs.remove("provisioning");
-			console.debug(e);
-
-			location.reload();
+			fs.remove("provisioning").then((e) => {
+				console.debug(e);
+				SiteSafeAPI.localState = {};
+				setTimeout(function () {
+					modal.hide()
+					location.reload();
+				}, 3000);
+			});
 		});
 	}
 
@@ -451,7 +456,8 @@ const mod_SiteSafeAPI = () => {
 							btn.classList.remove("selected");
 						});
 						e.target.classList.add("selected");
-						thisControl.querySelector(".thisValue").innerHTML = e.target.innerText
+						thisControl.querySelector(".thisValue").innerHTML =
+							e.target.innerText;
 					});
 				});
 
@@ -475,8 +481,12 @@ const mod_SiteSafeAPI = () => {
 			//Text Input
 			case 3: {
 				thisElement.appendChild(
-					ons.createElement(`<div class="itemHeader">${obj_JSON.text}</div>`)
+					ons.createElement(`<div class="itemHeader">
+					<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
+					<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
+					</div>`)
 				);
+
 				thisElement.appendChild(
 					ons.createElement(`	
 					<ons-input style="width: 100%;border: 1px dotted #CCCCCC; 
@@ -492,7 +502,10 @@ const mod_SiteSafeAPI = () => {
 			//Multiline Text
 			case 4: {
 				thisElement.appendChild(
-					ons.createElement(`<div class="itemHeader">${obj_JSON.text}</div>`)
+					ons.createElement(`<div class="itemHeader">
+					<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
+					<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
+					</div>`)
 				);
 				thisElement.appendChild(
 					ons.createElement(`<textarea id="fResp_${obj_JSON.id}" 
@@ -512,6 +525,13 @@ const mod_SiteSafeAPI = () => {
 			}
 			//Signature
 			case 6: {
+				thisElement.appendChild(
+					ons.createElement(`<div class="itemHeader">
+				<span class="itemTitle">${obj_JSON.text ? obj_JSON.text : ""}</span>
+				<span class="itemDesc">${obj_JSON.desc ? obj_JSON.desc : ""}</span>
+				</div>`)
+				);
+
 				let s = ons.createElement(`
 				<canvas class="signatureBox"
 				id="fResp_${obj_JSON.id}" 
@@ -789,6 +809,7 @@ const mod_SiteSafeAPI = () => {
 		},
 		get templates() {
 			return (async () => {
+				modal.show("Loading Templates")
 				if (localState.connected) {
 					return new Promise((resolve, reject) => {
 						fetch(APIServerDefault + "/list/templates", {
@@ -813,6 +834,7 @@ const mod_SiteSafeAPI = () => {
 									localState.templates[i.id] = i;
 								});
 								fs.write("templates", localState.templates);
+								modal.hide()
 								resolve(localState.templates);
 							})
 							.catch((e) => reject(e));
@@ -827,9 +849,11 @@ const mod_SiteSafeAPI = () => {
 						}
 
 						localState.templates = data;
+						modal.hide();
 						return data;
 					} else {
 						console.error("No Templates Loaded");
+						modal.hide()
 						return [];
 					}
 				}
@@ -840,6 +864,7 @@ const mod_SiteSafeAPI = () => {
 		},
 		get changed_documents() {
 			return (async () => {
+				modal.show("Loading Documents...")
 				//	prov = await SiteSafeAPI.provisioning;
 
 				if (localState.connected) {
@@ -884,10 +909,10 @@ const mod_SiteSafeAPI = () => {
 									localState.docs_last,
 									localState.documents
 								);
-
+									modal.hide()
 								resolve({ added: addedDocuments, removed: removedDocuments });
 							})
-							.catch((e) => reject(e));
+							.catch((e) => {modal.hide(); reject(e)});
 					});
 				} else {
 					e = await fs.exists("documents");
@@ -895,6 +920,7 @@ const mod_SiteSafeAPI = () => {
 						try {
 							data = await fs.readJSON(e.fullPath);
 						} catch {
+							modal.hide()
 							throw "Read Failed";
 						}
 
@@ -908,10 +934,11 @@ const mod_SiteSafeAPI = () => {
 							localState.documents_last,
 							localState.documents
 						);
-
+						modal.hide()
 						return { added: addedDocuments, removed: removedDocuments };
 					} else {
 						console.error("No Templates Loaded");
+						modal.hide()
 						return { added: {}, removed: {} };
 					}
 				}
